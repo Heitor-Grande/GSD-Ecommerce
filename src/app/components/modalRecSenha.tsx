@@ -187,28 +187,41 @@ export default function ModalRecSenha({
         onClose();
     }
 
+    const classesBotaoPrimario = "w-full !border-[var(--cor-verde)] !bg-[var(--cor-verde)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] focus-visible:!outline-[var(--cor-amarelo)]";
+    const classesBotaoSecundario = "w-full !border-[var(--cor-borda)] !bg-[var(--cor-superficie)] !text-[var(--cor-marrom)] hover:!border-[var(--cor-verde)] hover:!bg-[var(--cor-verde-claro)] hover:!text-[var(--cor-verde-escuro)] focus-visible:!outline-[var(--cor-amarelo)]";
+    const classesGrupoBotoes = "flex w-full flex-col-reverse gap-2 sm:flex-row";
+    const classesIcone = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--cor-verde-claro)] text-xl text-[var(--cor-verde)]";
+    const classesTituloEtapa = "mb-1 font-semibold text-[var(--cor-marrom)]";
+    const classesTextoEtapa = "mb-0 leading-6 text-[var(--cor-texto-secundario)]";
+
     return (
         <>
-            <Modal show={isOpen} onHide={fecharModal} centered contentClassName="response-modal border-0 rounded-xl shadow-2xl">
-                <Modal.Header closeButton className="border-b border-slate-100 px-5 py-4">
-                    <Modal.Title className="text-lg font-bold">
+            <Modal
+                show={isOpen}
+                onHide={fecharModal}
+                centered
+                dialogClassName="mx-auto w-[calc(100%-1.5rem)] max-w-lg"
+                contentClassName="response-modal overflow-hidden !rounded-lg !border !border-[var(--cor-borda)] !bg-[var(--cor-superficie)] shadow-2xl shadow-[rgba(75,47,31,0.18)]"
+            >
+                <Modal.Header closeButton className="border-b border-[var(--cor-borda)] bg-[var(--cor-superficie)] px-4 py-4 sm:px-5">
+                    <Modal.Title className="text-lg font-bold text-[var(--cor-marrom)]">
                         Recuperar senha
                     </Modal.Title>
                 </Modal.Header>
 
                 {etapa === "email" && (
                     <form onSubmit={enviarRecuperacaoSenha}>
-                        <Modal.Body>
-                            <div className="mb-4 flex items-start gap-3">
-                                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xl text-blue-600">
+                        <Modal.Body className="px-4 py-5 sm:px-5">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <span className={classesIcone}>
                                     <FaKey />
                                 </span>
 
                                 <div>
-                                    <p className="mb-1 font-semibold text-slate-800">
+                                    <p className={classesTituloEtapa}>
                                         Informe seu e-mail de acesso
                                     </p>
-                                    <p className="mb-0 text-slate-500">
+                                    <p className={classesTextoEtapa}>
                                         Você receberá um código de cinco dígitos para continuar a recuperação da senha.
                                     </p>
                                 </div>
@@ -230,8 +243,8 @@ export default function ModalRecSenha({
                             />
                         </Modal.Body>
 
-                        <Modal.Footer className="border-0 px-5 pb-5 pt-0">
-                            <div className="flex w-full gap-2">
+                        <Modal.Footer className="border-0 px-4 pb-5 pt-0 sm:px-5">
+                            <div className={classesGrupoBotoes}>
                                 <Botao
                                     size="sm"
                                     label="Cancelar"
@@ -240,7 +253,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="outline-secondary"
                                     type="button"
-                                    className="w-full"
+                                    className={classesBotaoSecundario}
                                 />
 
                                 <Botao
@@ -251,7 +264,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="primary"
                                     type="submit"
-                                    className="w-full"
+                                    className={classesBotaoPrimario}
                                 />
                             </div>
                         </Modal.Footer>
@@ -260,17 +273,17 @@ export default function ModalRecSenha({
 
                 {etapa === "codigo" && (
                     <form onSubmit={validarCodigoRecuperacao}>
-                        <Modal.Body>
-                            <div className="mb-4 flex items-start gap-3">
-                                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-600">
+                        <Modal.Body className="px-4 py-5 sm:px-5">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <span className={classesIcone}>
                                     <FaEnvelope />
                                 </span>
 
                                 <div>
-                                    <p className="mb-1 font-semibold text-slate-800">
+                                    <p className={classesTituloEtapa}>
                                         Digite o código recebido
                                     </p>
-                                    <p className="mb-0 text-slate-500">
+                                    <p className={classesTextoEtapa}>
                                         Enviamos o código para o e-mail informado. Ele possui cinco dígitos.
                                     </p>
                                 </div>
@@ -292,8 +305,8 @@ export default function ModalRecSenha({
                             />
                         </Modal.Body>
 
-                        <Modal.Footer className="border-0 px-5 pb-5 pt-0">
-                            <div className="flex w-full gap-2">
+                        <Modal.Footer className="border-0 px-4 pb-5 pt-0 sm:px-5">
+                            <div className={classesGrupoBotoes}>
                                 <Botao
                                     size="sm"
                                     label="Cancelar"
@@ -302,7 +315,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="outline-secondary"
                                     type="button"
-                                    className="w-full"
+                                    className={classesBotaoSecundario}
                                 />
 
                                 <Botao
@@ -313,7 +326,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="primary"
                                     type="submit"
-                                    className="w-full"
+                                    className={classesBotaoPrimario}
                                 />
                             </div>
                         </Modal.Footer>
@@ -322,17 +335,17 @@ export default function ModalRecSenha({
 
                 {etapa === "senha" && (
                     <form onSubmit={alterarSenhaRecuperacao}>
-                        <Modal.Body>
-                            <div className="mb-4 flex items-start gap-3">
-                                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xl text-blue-600">
+                        <Modal.Body className="px-4 py-5 sm:px-5">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <span className={classesIcone}>
                                     <FaLock />
                                 </span>
 
                                 <div>
-                                    <p className="mb-1 font-semibold text-slate-800">
+                                    <p className={classesTituloEtapa}>
                                         Cadastre uma nova senha
                                     </p>
-                                    <p className="mb-0 text-slate-500">
+                                    <p className={classesTextoEtapa}>
                                         Use pelo menos seis caracteres e confirme a senha antes de finalizar.
                                     </p>
                                 </div>
@@ -369,8 +382,8 @@ export default function ModalRecSenha({
                             />
                         </Modal.Body>
 
-                        <Modal.Footer className="border-0 px-5 pb-5 pt-0">
-                            <div className="flex w-full gap-2">
+                        <Modal.Footer className="border-0 px-4 pb-5 pt-0 sm:px-5">
+                            <div className={classesGrupoBotoes}>
                                 <Botao
                                     size="sm"
                                     label="Cancelar"
@@ -379,7 +392,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="outline-secondary"
                                     type="button"
-                                    className="w-full"
+                                    className={classesBotaoSecundario}
                                 />
 
                                 <Botao
@@ -390,7 +403,7 @@ export default function ModalRecSenha({
                                     loading={false}
                                     variant="primary"
                                     type="submit"
-                                    className="w-full"
+                                    className={classesBotaoPrimario}
                                 />
                             </div>
                         </Modal.Footer>
@@ -399,21 +412,21 @@ export default function ModalRecSenha({
 
                 {etapa === "concluido" && (
                     <>
-                        <Modal.Body className="px-6 pb-5 pt-7 text-center">
-                            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-xl text-emerald-600">
+                        <Modal.Body className="px-4 pb-5 pt-7 text-center sm:px-6">
+                            <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--cor-verde-claro)] text-xl text-[var(--cor-verde)]">
                                 <FaLock />
                             </span>
 
-                            <h3 className="mb-2 mt-3 text-lg font-bold text-slate-900">
+                            <h3 className="mb-2 mt-3 text-lg font-bold text-[var(--cor-marrom)]">
                                 Senha alterada
                             </h3>
 
-                            <p className="mb-0 text-slate-500">
+                            <p className="mb-0 leading-6 text-[var(--cor-texto-secundario)]">
                                 Sua senha foi atualizada com sucesso. Você já pode acessar a conta com a nova senha.
                             </p>
                         </Modal.Body>
 
-                        <Modal.Footer className="border-0 px-5 pb-5 pt-0">
+                        <Modal.Footer className="border-0 px-4 pb-5 pt-0 sm:px-5">
                             <Botao
                                 size="sm"
                                 label="Entendi"
@@ -422,7 +435,7 @@ export default function ModalRecSenha({
                                 loading={false}
                                 variant="primary"
                                 type="button"
-                                className="w-full"
+                                className={classesBotaoPrimario}
                             />
                         </Modal.Footer>
                     </>

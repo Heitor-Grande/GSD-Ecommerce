@@ -58,18 +58,21 @@ export function FormularioLogin({ nomeEmpresa }: FormularioLoginProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--cor-fundo)] px-4 py-10 text-[var(--cor-texto)]">
-      <section className="w-full max-w-md">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--cor-verde-escuro)] px-4 py-10 text-[var(--cor-texto)]">
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(31,77,44,0.78),rgba(75,47,31,0.62)),url('/images/loginimage.png')] bg-cover bg-center" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(240,189,61,0.16),transparent_32%)]" />
+
+      <section className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex justify-center">
           <Link href="/" className="inline-flex items-center gap-3 text-decoration-none">
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--cor-verde-escuro)] text-[var(--cor-amarelo)]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--cor-amarelo)] text-[var(--cor-verde-escuro)]">
               <FaLeaf aria-hidden="true" />
             </span>
-            <span className="text-xl font-bold text-[var(--cor-marrom)]">{nomeEmpresa}</span>
+            <span className="text-xl font-bold text-white drop-shadow-sm">{nomeEmpresa}</span>
           </Link>
         </div>
 
-        <div className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-6 shadow-lg shadow-[rgba(75,47,31,0.12)] sm:p-8">
+        <div className="rounded-lg border border-white/35 bg-[var(--cor-superficie)]/95 p-6 shadow-2xl shadow-[rgba(31,77,44,0.32)] backdrop-blur sm:p-8">
           <div className="mb-6 text-center">
             <p className="mb-2 text-sm font-bold uppercase tracking-[0.14em] text-[var(--cor-verde)]">
               Área do cliente
@@ -138,7 +141,7 @@ export function FormularioLogin({ nomeEmpresa }: FormularioLoginProps) {
         <div className="mt-5 text-center">
           <Link
             href="/"
-            className="text-sm font-semibold text-[var(--cor-texto-secundario)] text-decoration-none transition hover:text-[var(--cor-verde)]"
+            className="text-sm font-semibold text-white text-decoration-none drop-shadow-sm transition hover:text-[var(--cor-amarelo-claro)]"
           >
             Voltar para a página inicial
           </Link>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { FaHome, FaLeaf, FaRulerCombined, FaSeedling, FaStore, FaTruck } from "react-icons/fa";
 
 /**
@@ -6,7 +7,7 @@ import { FaHome, FaLeaf, FaRulerCombined, FaSeedling, FaStore, FaTruck } from "r
  * Apresenta a proposta da loja sem listar produtos diretamente na home.
  */
 export default function PaginaInicial() {
-  const nomeEmpresa = process.env.NOME_EMPRESA || "Gramas Premium";
+  const nomeEmpresa = process.env.NOME_EMPRESA || "";
 
   return (
     <main className="min-h-screen bg-[var(--cor-fundo)] text-[var(--cor-texto)]">
@@ -21,10 +22,10 @@ export default function PaginaInicial() {
 
           <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
             <Link
-              href="/gramas"
+              href="/produtos"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] px-3 py-2 text-center text-sm font-semibold text-[var(--cor-marrom)] text-decoration-none transition hover:border-[var(--cor-verde)] hover:text-[var(--cor-verde)] sm:px-4"
             >
-              Nossas Gramas
+              Nossos Produtos
             </Link>
             <Link
               href="/login"
@@ -37,7 +38,8 @@ export default function PaginaInicial() {
       </nav>
 
       <section className="relative overflow-hidden border-b border-[var(--cor-borda)] bg-[var(--cor-superficie)]">
-        <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(135deg,rgba(240,189,61,0.18),rgba(75,47,31,0.1)),repeating-linear-gradient(115deg,rgba(47,107,63,0.22)_0,rgba(47,107,63,0.22)_8px,rgba(31,77,44,0.12)_8px,rgba(31,77,44,0.12)_18px)] lg:block" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,253,247,0.96)_0%,rgba(255,253,247,0.86)_48%,rgba(47,107,63,0.38)_100%),url('/images/homeimage.png')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(240,189,61,0.22),transparent_30%)]" />
 
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-24">
           <div className="max-w-2xl">
@@ -71,7 +73,16 @@ export default function PaginaInicial() {
 
           <div className="flex items-end lg:justify-end">
             <div className="w-full rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie-suave)] p-5 shadow-sm lg:max-w-md">
-              <div className="mb-4 h-56 rounded-lg border border-[var(--cor-borda)] bg-[linear-gradient(180deg,var(--cor-superficie)_0%,var(--cor-amarelo-claro)_100%),repeating-linear-gradient(90deg,var(--cor-verde)_0,var(--cor-verde)_9px,var(--cor-verde-escuro)_9px,var(--cor-verde-escuro)_18px)] bg-blend-overlay" />
+              <div className="relative mb-4 h-64 overflow-hidden rounded-lg border border-[var(--cor-borda)]">
+                <Image
+                  src="/images/foto1.png"
+                  alt="Gramado verde em destaque para paisagismo"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 28rem, 100vw"
+                  className="object-cover"
+                />
+              </div>
               <p className="mb-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--cor-texto-secundario)]">
                 Atendimento completo
               </p>
@@ -101,6 +112,16 @@ export default function PaginaInicial() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="relative min-h-64 overflow-hidden rounded-lg border border-[var(--cor-borda)] sm:col-span-2">
+              <Image
+                src="/images/foto2.png"
+                alt="Detalhe de grama natural para jardins e áreas externas"
+                fill
+                sizes="(min-width: 1024px) 42rem, 100vw"
+                className="object-cover"
+              />
+            </div>
+
             <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
               <FaSeedling className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
               <h3 className="mb-2 text-lg font-bold text-[var(--cor-marrom)]">Curadoria verde</h3>
