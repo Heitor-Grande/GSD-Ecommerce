@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaLeaf, FaRulerCombined, FaShieldAlt, FaTruck } from "react-icons/fa";
+import { FaHome, FaLeaf, FaRulerCombined, FaSeedling, FaStore, FaTruck } from "react-icons/fa";
 
 /**
  * Pagina inicial pública do ecommerce de gramas.
@@ -42,15 +42,15 @@ export default function PaginaInicial() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-24">
           <div className="max-w-2xl">
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--cor-verde)]">
-              Ecommerce especializado em gramas
+              Paisagismo, floricultura e gramas
             </p>
             <h1 className="mb-5 text-4xl font-bold leading-tight text-[var(--cor-marrom)] sm:text-5xl lg:text-6xl">
-              Grama de qualidade para transformar áreas externas.
+              Ambientes mais verdes, bonitos e prontos para viver.
             </h1>
             <p className="mb-8 text-lg leading-8 text-[var(--cor-texto-secundario)]">
-              Encontre a grama ideal para jardins, obras, condomínios e áreas
-              comerciais com uma jornada de compra simples, atendimento direto
-              e entrega organizada.
+              A {nomeEmpresa} conecta paisagismo, floricultura e venda de gramas
+              em uma experiência simples para quem quer cuidar de jardins, áreas
+              externas, condomínios, obras e espaços comerciais.
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -58,7 +58,7 @@ export default function PaginaInicial() {
                 href="/gramas"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[var(--cor-verde)] px-5 py-3 font-semibold text-white text-decoration-none shadow-sm transition hover:bg-[var(--cor-verde-escuro)]"
               >
-                Conhecer nossas gramas
+              Ver opções para meu jardim
               </Link>
               <Link
                 href="/login"
@@ -73,13 +73,51 @@ export default function PaginaInicial() {
             <div className="w-full rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie-suave)] p-5 shadow-sm lg:max-w-md">
               <div className="mb-4 h-56 rounded-lg border border-[var(--cor-borda)] bg-[linear-gradient(180deg,var(--cor-superficie)_0%,var(--cor-amarelo-claro)_100%),repeating-linear-gradient(90deg,var(--cor-verde)_0,var(--cor-verde)_9px,var(--cor-verde-escuro)_9px,var(--cor-verde-escuro)_18px)] bg-blend-overlay" />
               <p className="mb-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--cor-texto-secundario)]">
-                Compra orientada
+                Atendimento completo
               </p>
               <p className="mb-0 text-base leading-7 text-[var(--cor-texto)]">
-                O ecommerce organiza o pedido para facilitar escolha, cálculo
-                de necessidade, dados de entrega e acompanhamento pelo cliente.
+                Uma vitrine digital para escolher gramas, plantas e soluções
+                para paisagismo com suporte desde a decisão até a entrega.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-[var(--cor-borda)] bg-[var(--cor-fundo)]">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+          <div>
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.14em] text-[var(--cor-verde)]">
+              Sobre a empresa
+            </p>
+            <h2 className="mb-4 text-3xl font-bold leading-tight text-[var(--cor-marrom)]">
+              Do cuidado com a planta ao acabamento do jardim.
+            </h2>
+            <p className="mb-0 leading-8 text-[var(--cor-texto-secundario)]">
+              A proposta da {nomeEmpresa} é reunir em um só ecommerce as soluções
+              que deixam áreas externas mais bonitas: gramas, plantas, itens de
+              floricultura e apoio para decisões de paisagismo.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+              <FaSeedling className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+              <h3 className="mb-2 text-lg font-bold text-[var(--cor-marrom)]">Curadoria verde</h3>
+              <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+                Uma comunicação comercial voltada para qualidade, origem e uso
+                correto de cada solução para o jardim.
+              </p>
+            </article>
+
+            <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+              <FaHome className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+              <h3 className="mb-2 text-lg font-bold text-[var(--cor-marrom)]">Ambientes completos</h3>
+              <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+                Ideal para clientes que querem gramado, plantas e acabamento
+                visual em uma compra mais simples e bem orientada.
+              </p>
+            </article>
           </div>
         </div>
       </section>
@@ -87,30 +125,50 @@ export default function PaginaInicial() {
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-12 sm:px-6 md:grid-cols-3 lg:px-8">
         <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
           <FaRulerCombined className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
-          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Escolha com clareza</h2>
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Paisagismo para cada espaço</h2>
           <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
-            Estrutura preparada para orientar o cliente por tipo de uso, metragem
-            e necessidade do terreno.
+            Apresentação pensada para orientar escolhas por tipo de área,
+            incidência de sol, circulação e estilo do ambiente.
+          </p>
+        </article>
+
+        <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+          <FaStore className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Floricultura selecionada</h2>
+          <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+            Espaço comercial para valorizar plantas, vasos, insumos e itens que
+            completam jardins residenciais e comerciais.
           </p>
         </article>
 
         <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
           <FaTruck className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
-          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Entrega planejada</h2>
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Compra com entrega organizada</h2>
           <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
-            Base visual voltada para pedidos com endereço, disponibilidade e
-            acompanhamento de compra.
+            Jornada preparada para pedidos com dados de entrega, acompanhamento
+            e comunicação clara com o cliente.
           </p>
         </article>
+      </section>
 
-        <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
-          <FaShieldAlt className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
-          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Conta do cliente</h2>
-          <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
-            Acesso separado para o cliente consultar dados, histórico e próximas
-            etapas do atendimento.
-          </p>
-        </article>
+      <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-verde-escuro)] p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="mb-2 text-sm font-bold uppercase tracking-[0.14em] text-[var(--cor-amarelo)]">
+              Pronto para começar
+            </p>
+            <h2 className="mb-0 text-2xl font-bold">
+              Escolha o melhor caminho para transformar seu espaço externo.
+            </h2>
+          </div>
+
+          <Link
+            href="/gramas"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[var(--cor-amarelo)] px-5 py-3 text-center font-semibold text-[var(--cor-marrom)] text-decoration-none transition hover:bg-[var(--cor-amarelo-claro)]"
+          >
+            Conhecer soluções
+          </Link>
+        </div>
       </section>
     </main>
   );
