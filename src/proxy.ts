@@ -8,7 +8,9 @@ const ROTAS_PUBLICAS = [
     "/api/auth/login", 
     "/api/auth/recSenha", 
     "/api/auth/recSenha/validarCodigo", 
-    "/api/auth/recSenha/alterarSenha"
+    "/api/auth/recSenha/alterarSenha",
+    "/produtos",
+    "/login"
 ];
 
 // Verifica se o caminho da requisição é uma rota pública.
