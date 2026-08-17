@@ -89,10 +89,10 @@ function ItemMenuLateral({
             <div>
                 <Link
                     href={item.href || "#"}
-                    className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-300 no-underline transition hover:bg-white/10 hover:text-white ${estaAtivo ? "bg-white/10 text-white" : ""}`}
+                    className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[var(--cor-amarelo-claro)] no-underline transition hover:bg-white/10 hover:text-white ${estaAtivo ? "bg-white/10 text-white" : ""}`}
                     onClick={aoNavegar}
                 >
-                    <span className="inline-flex w-5 items-center justify-center text-sky-400">{item.icon}</span>
+                    <span className="inline-flex w-5 items-center justify-center text-[var(--cor-amarelo)]">{item.icon}</span>
                     <span>{item.label}</span>
                 </Link>
             </div>
@@ -104,11 +104,11 @@ function ItemMenuLateral({
             <Botao
                 size="sm"
                 label={item.label}
-                icon={<span className="inline-flex w-5 items-center justify-center text-sky-400">{item.icon}</span>}
+                icon={<span className="inline-flex w-5 items-center justify-center text-[var(--cor-amarelo)]">{item.icon}</span>}
                 iconRight={aberto ? <FaChevronDown /> : <FaChevronRight />}
                 type="button"
                 variant="link"
-                className={`min-h-11 w-full justify-start border-transparent px-3 py-2.5 text-left text-sm text-slate-300 hover:bg-white/10 hover:text-white ${aberto ? "bg-white/10 text-white" : ""}`}
+                className={`min-h-11 w-full justify-start border-transparent px-3 py-2.5 text-left text-sm !text-[var(--cor-amarelo-claro)] hover:!bg-white/10 hover:!text-white ${aberto ? "!bg-white/10 !text-white" : ""}`}
                 onClick={() => setAberto(!aberto)}
                 disabled={false}
                 loading={false}
@@ -289,25 +289,25 @@ export default function BarraLateral({
 
     return (
         <>
-            <nav className={`fixed inset-x-0 top-0 z-[1030] flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur transition-[left] duration-200 ${aberta ? "lg:left-72" : ""}`}>
+            <nav className={`fixed inset-x-0 top-0 z-[1030] flex h-16 items-center gap-3 border-b border-[var(--cor-borda)] bg-[var(--cor-superficie)]/90 px-4 backdrop-blur transition-[left] duration-200 ${aberta ? "lg:left-72" : ""}`}>
                 <Botao
                     size="sm"
                     icon={<FaBars />}
                     type="button"
                     variant="link"
-                    className="h-10 w-10 border-slate-200 bg-white p-0 text-slate-900 hover:bg-slate-50"
+                    className="h-10 w-10 !border-[var(--cor-borda)] !bg-[var(--cor-superficie)] p-0 !text-[var(--cor-marrom)] hover:!bg-[var(--cor-verde-claro)]"
                     onClick={abrirBarraLateral}
                     disabled={false}
                     loading={false}
                     ariaLabel={aberta ? "Menu aberto" : "Abrir menu"}
                 />
 
-                <span className="font-bold text-slate-900">{nomeEmpresaNavegacao}</span>
+                <span className="font-bold text-[var(--cor-marrom)]">{nomeEmpresaNavegacao}</span>
                 {usuarioLogado && (
-                    <div className="ml-auto hidden min-w-0 max-w-[min(34rem,52vw)] flex-col items-end text-right text-xs leading-4 text-slate-600 sm:flex">
-                        <p className="max-w-full truncate font-semibold text-slate-900">{usuarioLogado.nome}</p>
+                    <div className="ml-auto hidden min-w-0 max-w-[min(34rem,52vw)] flex-col items-end text-right text-xs leading-4 text-[var(--cor-texto-secundario)] sm:flex">
+                        <p className="max-w-full truncate font-semibold text-[var(--cor-marrom)]">{usuarioLogado.nome}</p>
                         <p className="max-w-full truncate">{usuarioLogado.email}</p>
-                        <p className="max-w-full truncate text-slate-500">{usuarioLogado.perfilNome}</p>
+                        <p className="max-w-full truncate text-[var(--cor-texto-secundario)]">{usuarioLogado.perfilNome}</p>
                     </div>
                 )}
             </nav>
@@ -317,7 +317,7 @@ export default function BarraLateral({
                     size="sm"
                     type="button"
                     variant="link"
-                    className="fixed inset-0 z-[1040] h-full w-full rounded-none border-0 bg-slate-950/60 p-0 hover:bg-slate-950/60 lg:hidden"
+                    className="fixed inset-0 z-[1040] h-full w-full rounded-none border-0 bg-[rgba(45,36,28,0.64)] p-0 hover:bg-[rgba(45,36,28,0.64)] lg:hidden"
                     onClick={fecharBarraLateral}
                     disabled={false}
                     loading={false}
@@ -325,11 +325,11 @@ export default function BarraLateral({
                 />
             )}
 
-            <aside className={`fixed inset-y-0 left-0 z-[1050] flex w-[min(18rem,calc(100vw-2rem))] flex-col bg-slate-950 p-4 text-slate-100 shadow-2xl shadow-slate-950/30 transition-transform duration-200 ${aberta ? "translate-x-0" : "-translate-x-[105%]"}`}>
+            <aside className={`fixed inset-y-0 left-0 z-[1050] flex w-[min(18rem,calc(100vw-2rem))] flex-col bg-[var(--cor-marrom)] p-4 text-[var(--cor-amarelo-claro)] shadow-2xl shadow-[rgba(75,47,31,0.3)] transition-transform duration-200 ${aberta ? "translate-x-0" : "-translate-x-[105%]"}`}>
                 <div className="border-b border-white/10 pb-4">
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
-                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-700 font-extrabold text-white">{iniciaisEmpresa}</span>
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--cor-verde)] font-extrabold text-white">{iniciaisEmpresa}</span>
                             <div className="min-w-0">
                                 <strong className="block truncate">{nomeEmpresaNavegacao}</strong>
                             </div>
@@ -340,7 +340,7 @@ export default function BarraLateral({
                             icon={<FaTimes />}
                             type="button"
                             variant="link"
-                            className="h-10 w-10 shrink-0 border-white/10 bg-white/5 p-0 text-slate-100 hover:bg-white/10"
+                            className="h-10 w-10 shrink-0 border-white/10 bg-white/5 p-0 !text-[var(--cor-amarelo-claro)] hover:!bg-white/10"
                             onClick={fecharBarraLateral}
                             disabled={false}
                             loading={false}
@@ -350,7 +350,7 @@ export default function BarraLateral({
                 </div>
 
                 <div className="border-b border-white/10 py-4">
-                    <label className="mb-2 block text-sm font-semibold text-slate-300" htmlFor="sidebar-empresa-navegacao">
+                    <label className="mb-2 block text-sm font-semibold text-[var(--cor-amarelo-claro)]" htmlFor="sidebar-empresa-navegacao">
                         Empresa de navegação
                     </label>
 
@@ -377,14 +377,14 @@ export default function BarraLateral({
                     ))}
                 </nav>
 
-                <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4 text-sm text-slate-400">
+                <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4 text-sm text-[var(--cor-borda)]">
                     <Botao
                         size="sm"
                         label="Minha conta"
-                        icon={<span className="inline-flex w-5 items-center justify-center text-sky-400"><FaUserCircle /></span>}
+                        icon={<span className="inline-flex w-5 items-center justify-center text-[var(--cor-amarelo)]"><FaUserCircle /></span>}
                         type="button"
                         variant="link"
-                        className="min-h-10 w-full justify-start border-transparent px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white"
+                        className="min-h-10 w-full justify-start border-transparent px-3 py-2 !text-[var(--cor-amarelo-claro)] hover:!bg-white/10 hover:!text-white"
                         onClick={() => {
                             fecharBarraLateral();
                             window.location.assign("/minhaConta");
@@ -396,10 +396,10 @@ export default function BarraLateral({
                     <Botao
                         size="sm"
                         label="Sair"
-                        icon={<span className="inline-flex w-5 items-center justify-center text-sky-400"><FaSignOutAlt /></span>}
+                        icon={<span className="inline-flex w-5 items-center justify-center text-[var(--cor-amarelo)]"><FaSignOutAlt /></span>}
                         type="button"
                         variant="link"
-                        className="min-h-10 w-full justify-start border-transparent px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white"
+                        className="min-h-10 w-full justify-start border-transparent px-3 py-2 !text-[var(--cor-amarelo-claro)] hover:!bg-white/10 hover:!text-white"
                         onClick={realizarLogoffUsuario}
                         disabled={carregandoLogout}
                         loading={false}
@@ -407,7 +407,7 @@ export default function BarraLateral({
 
                     <div className="flex items-center justify-between">
                         <span>Versão</span>
-                        <strong className="text-slate-100">v{versaoApp}</strong>
+                        <strong className="text-white">v{versaoApp}</strong>
                     </div>
                 </div>
             </aside>
