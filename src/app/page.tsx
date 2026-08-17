@@ -1,226 +1,117 @@
-"use client";
-
-import { Botao } from "@/components/inputs/button";
-import { CampoTexto } from "@/components/inputs/input";
-import { ModalCarregamento } from "@/components/modals/loading";
-import ModalResposta from "@/components/modals/responseModal";
-import { requisitarAPI } from "@/utils/api";
-import ModalRecSenha from "./components/modalRecSenha";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  FaArrowRight,
-  FaChartLine,
-  FaCheckCircle,
-  FaRocket,
-  FaShieldAlt,
-} from "react-icons/fa";
+import Link from "next/link";
+import { FaLeaf, FaRulerCombined, FaShieldAlt, FaTruck } from "react-icons/fa";
 
 /**
- * Pagina inicial do template com landing page e login.
- * Use como ponto de partida para apresentar a aplicação e autenticar o usuário.
+ * Pagina inicial pública do ecommerce de gramas.
+ * Apresenta a proposta da loja sem listar produtos diretamente na home.
  */
 export default function PaginaInicial() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loginMessage, setLoginMessage] = useState("");
-  const [modalRecSenhaAberto, setModalRecSenhaAberto] = useState(false);
-
-  /**
-   * Envia as credenciais para a API de login e exibe a resposta sem manipular tokens no front.
-   */
-  async function enviarFormularioLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setLoginMessage("");
-
-    try {
-      await requisitarAPI("/api/auth/login", {
-        method: "POST",
-        body: {
-          email,
-          password,
-        },
-      });
-
-      setPassword("");
-      router.push("/menuPrincipal");
-    } catch (erro) {
-      const mensagemErro = erro instanceof Error
-        ? erro.message
-        : "Não foi possível conectar ao servidor.";
-
-      setLoginMessage(mensagemErro);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const nomeEmpresa = process.env.NOME_EMPRESA || "Gramas Premium";
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb]">
-      <section className="flex min-h-[calc(100vh-3rem)] items-center bg-[radial-gradient(circle_at_85%_20%,rgba(34,211,238,0.24),transparent_28%),linear-gradient(135deg,rgba(13,33,64,0.97),rgba(50,38,112,0.92))] px-4 py-8 lg:py-16">
-        <div className="mx-auto w-full max-w-6xl">
-          <nav className="mb-12 flex items-center justify-between lg:mb-16">
-            <div className="inline-flex items-center gap-3 text-lg font-bold text-white">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-                <FaRocket />
-              </span>
-              <span>Template App</span>
+    <main className="min-h-screen bg-[var(--cor-fundo)] text-[var(--cor-texto)]">
+      <nav className="sticky top-0 z-20 border-b border-[var(--cor-borda)] bg-[var(--cor-superficie)]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <Link href="/" className="flex w-full min-w-0 items-center gap-3 text-decoration-none sm:w-auto">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--cor-verde-escuro)] text-[var(--cor-amarelo)]">
+              <FaLeaf aria-hidden="true" />
+            </span>
+            <span className="min-w-0 truncate text-lg font-bold text-[var(--cor-marrom)]">{nomeEmpresa}</span>
+          </Link>
+
+          <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
+            <Link
+              href="/gramas"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] px-3 py-2 text-center text-sm font-semibold text-[var(--cor-marrom)] text-decoration-none transition hover:border-[var(--cor-verde)] hover:text-[var(--cor-verde)] sm:px-4"
+            >
+              Nossas Gramas
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--cor-verde)] px-3 py-2 text-center text-sm font-semibold text-white text-decoration-none shadow-sm transition hover:bg-[var(--cor-verde-escuro)] sm:px-4"
+            >
+              Entrar na minha conta
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <section className="relative overflow-hidden border-b border-[var(--cor-borda)] bg-[var(--cor-superficie)]">
+        <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[linear-gradient(135deg,rgba(240,189,61,0.18),rgba(75,47,31,0.1)),repeating-linear-gradient(115deg,rgba(47,107,63,0.22)_0,rgba(47,107,63,0.22)_8px,rgba(31,77,44,0.12)_8px,rgba(31,77,44,0.12)_18px)] lg:block" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--cor-verde)]">
+              Ecommerce especializado em gramas
+            </p>
+            <h1 className="mb-5 text-4xl font-bold leading-tight text-[var(--cor-marrom)] sm:text-5xl lg:text-6xl">
+              Grama de qualidade para transformar áreas externas.
+            </h1>
+            <p className="mb-8 text-lg leading-8 text-[var(--cor-texto-secundario)]">
+              Encontre a grama ideal para jardins, obras, condomínios e áreas
+              comerciais com uma jornada de compra simples, atendimento direto
+              e entrega organizada.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/gramas"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[var(--cor-verde)] px-5 py-3 font-semibold text-white text-decoration-none shadow-sm transition hover:bg-[var(--cor-verde-escuro)]"
+              >
+                Conhecer nossas gramas
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] px-5 py-3 font-semibold text-[var(--cor-marrom)] text-decoration-none transition hover:border-[var(--cor-verde)] hover:text-[var(--cor-verde)]"
+              >
+                Acessar minha conta
+              </Link>
             </div>
+          </div>
 
-            <a href="#login" className="rounded-lg border border-white/70 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
-              Acessar
-            </a>
-          </nav>
-
-          <div className="grid items-center gap-10 lg:min-h-[34rem] lg:grid-cols-[1.35fr_0.9fr]">
-            <div>
-              <span className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-800 shadow-sm">
-                Base pronta para novos projetos
-              </span>
-
-              <h1 className="mb-4 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-5xl">
-                Comece sua próxima aplicação com uma estrutura pronta para evoluir.
-              </h1>
-
-              <p className="mb-6 max-w-2xl text-lg leading-relaxed text-white/70">
-                Um template com componentes, modais, hooks e padrões essenciais para acelerar o desenvolvimento de sistemas web.
+          <div className="flex items-end lg:justify-end">
+            <div className="w-full rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie-suave)] p-5 shadow-sm lg:max-w-md">
+              <div className="mb-4 h-56 rounded-lg border border-[var(--cor-borda)] bg-[linear-gradient(180deg,var(--cor-superficie)_0%,var(--cor-amarelo-claro)_100%),repeating-linear-gradient(90deg,var(--cor-verde)_0,var(--cor-verde)_9px,var(--cor-verde-escuro)_9px,var(--cor-verde-escuro)_18px)] bg-blend-overlay" />
+              <p className="mb-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--cor-texto-secundario)]">
+                Compra orientada
               </p>
-
-              <div className="flex flex-wrap gap-3">
-                <a href="#login" className="inline-flex min-h-12 items-center rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-700">
-                  Entrar agora <FaArrowRight className="ml-2" />
-                </a>
-                <a href="#recursos" className="inline-flex min-h-12 items-center rounded-lg border border-white/70 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
-                  Ver recursos
-                </a>
-              </div>
-            </div>
-
-            <div id="login">
-              <div className="rounded-xl border border-white/20 bg-white p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
-                <div className="mb-6">
-                  <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Área segura
-                  </p>
-                  <h2 className="mb-1 text-2xl font-extrabold text-slate-900">Acesse sua conta</h2>
-                  <p className="mb-0 text-slate-500">
-                    Entre para continuar usando a plataforma.
-                  </p>
-                </div>
-
-                <form onSubmit={enviarFormularioLogin}>
-                  <CampoTexto
-                    id="email"
-                    label="E-mail"
-                    type="email"
-                    value={email}
-                    placeholder="email@empresa.com"
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      setLoginMessage("");
-                    }}
-                    disabled={loading}
-                    required
-                    className="mb-4"
-                  />
-
-                  <CampoTexto
-                    id="password"
-                    label="Senha"
-                    type="password"
-                    value={password}
-                    placeholder="Digite sua senha"
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      setLoginMessage("");
-                    }}
-                    disabled={loading}
-                    required
-                    className="mb-2"
-                  />
-
-                  <div className="mb-4 flex justify-end">
-                    <button
-                      type="button"
-                      className="border-0 bg-transparent p-0 text-sm font-semibold text-blue-700 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
-                      onClick={() => setModalRecSenhaAberto(true)}
-                      disabled={loading}
-                    >
-                      Esqueci minha senha
-                    </button>
-                  </div>
-
-                  <Botao
-                    size="lg"
-                    label="Entrar"
-                    onClick={() => undefined}
-                    disabled={loading}
-                    loading={false}
-                    variant="primary"
-                    type="submit"
-                    className="w-full"
-                  />
-                </form>
-              </div>
+              <p className="mb-0 text-base leading-7 text-[var(--cor-texto)]">
+                O ecommerce organiza o pedido para facilitar escolha, cálculo
+                de necessidade, dados de entrega e acompanhamento pelo cliente.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-16" id="recursos">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid items-stretch gap-4 md:grid-cols-3">
-            <div>
-              <div className="h-full rounded-xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/70">
-                <FaCheckCircle className="h-8 w-8 text-blue-600" />
-                <h3 className="mt-4 text-lg font-bold text-slate-900">Componentes reutilizáveis</h3>
-                <p className="mb-0 mt-2 text-slate-500">
-                  Inputs, botões e modais prontos para padronizar novas telas.
-                </p>
-              </div>
-            </div>
+      <section className="mx-auto grid max-w-7xl gap-4 px-4 py-12 sm:px-6 md:grid-cols-3 lg:px-8">
+        <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+          <FaRulerCombined className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Escolha com clareza</h2>
+          <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+            Estrutura preparada para orientar o cliente por tipo de uso, metragem
+            e necessidade do terreno.
+          </p>
+        </article>
 
-            <div>
-              <div className="h-full rounded-xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/70">
-                <FaShieldAlt className="h-8 w-8 text-emerald-600" />
-                <h3 className="mt-4 text-lg font-bold text-slate-900">Base consistente</h3>
-                <p className="mb-0 mt-2 text-slate-500">
-                  Organização pensada para services, hooks e utils compartilhados.
-                </p>
-              </div>
-            </div>
+        <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+          <FaTruck className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Entrega planejada</h2>
+          <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+            Base visual voltada para pedidos com endereço, disponibilidade e
+            acompanhamento de compra.
+          </p>
+        </article>
 
-            <div>
-              <div className="h-full rounded-xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/70">
-                <FaChartLine className="h-8 w-8 text-purple-600" />
-                <h3 className="mt-4 text-lg font-bold text-slate-900">Pronto para crescer</h3>
-                <p className="mb-0 mt-2 text-slate-500">
-                  Estrutura simples para evoluir de protótipo para produto.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <article className="rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] p-5">
+          <FaShieldAlt className="mb-4 text-2xl text-[var(--cor-verde)]" aria-hidden="true" />
+          <h2 className="mb-2 text-xl font-bold text-[var(--cor-marrom)]">Conta do cliente</h2>
+          <p className="mb-0 leading-7 text-[var(--cor-texto-secundario)]">
+            Acesso separado para o cliente consultar dados, histórico e próximas
+            etapas do atendimento.
+          </p>
+        </article>
       </section>
-
-      <ModalResposta
-        isOpen={Boolean(loginMessage)}
-        message={loginMessage}
-        onClose={() => setLoginMessage("")}
-      />
-
-      <ModalCarregamento
-        show={loading}
-        text="Validando suas credenciais..."
-      />
-
-      <ModalRecSenha
-        isOpen={modalRecSenhaAberto}
-        onClose={() => setModalRecSenhaAberto(false)}
-      />
-    </div>
+    </main>
   );
 }

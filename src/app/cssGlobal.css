@@ -3,6 +3,18 @@
 :root {
     --modal-backdrop-zindex: 1040;
     --modal-zindex: 1050;
+    --cor-fundo: #f7f2e8;
+    --cor-superficie: #fffdf7;
+    --cor-superficie-suave: #efe4cf;
+    --cor-borda: #d8c5a5;
+    --cor-texto: #2d241c;
+    --cor-texto-secundario: #6f5b45;
+    --cor-marrom: #4b2f1f;
+    --cor-verde: #2f6b3f;
+    --cor-verde-escuro: #1f4d2c;
+    --cor-verde-claro: #dfead3;
+    --cor-amarelo: #f0bd3d;
+    --cor-amarelo-claro: #fff1b8;
 }
 
 html {
@@ -11,8 +23,8 @@ html {
 
 body {
     min-height: 100vh;
-    background-color: #f4f7fb;
-    color: #172033;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
 }
 
 button,
@@ -67,11 +79,11 @@ textarea {
     width: 100%;
     flex-direction: column;
     pointer-events: auto;
-    background-color: #ffffff;
+    background-color: var(--cor-superficie);
     background-clip: padding-box;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--cor-borda);
     border-radius: 0.75rem;
-    box-shadow: 0 1rem 3rem rgba(15, 23, 42, 0.22);
+    box-shadow: 0 1rem 3rem rgba(75, 47, 31, 0.22);
     outline: 0;
 }
 
@@ -85,17 +97,17 @@ textarea {
 
 .modal-header {
     justify-content: space-between;
-    border-bottom: 1px solid #eef2f6;
+    border-bottom: 1px solid var(--cor-borda);
 }
 
 .modal-footer {
     justify-content: flex-end;
-    border-top: 1px solid #eef2f6;
+    border-top: 1px solid var(--cor-borda);
 }
 
 .modal-title {
     margin: 0;
-    color: #172033;
+    color: var(--cor-texto);
     font-weight: 700;
     line-height: 1.35;
 }
@@ -110,7 +122,7 @@ textarea {
     position: fixed;
     inset: 0;
     z-index: var(--modal-backdrop-zindex);
-    background-color: rgba(15, 23, 42, 0.62);
+    background-color: rgba(45, 36, 28, 0.64);
 }
 
 .btn-close {
@@ -133,7 +145,7 @@ textarea {
     width: 1rem;
     height: 0.125rem;
     border-radius: 999px;
-    background-color: #64748b;
+    background-color: var(--cor-texto-secundario);
     content: "";
 }
 
@@ -147,11 +159,11 @@ textarea {
 
 .btn-close:hover::before,
 .btn-close:hover::after {
-    background-color: #172033;
+    background-color: var(--cor-texto);
 }
 
 .btn-close:focus-visible {
-    outline: 2px solid #0d6efd;
+    outline: 2px solid var(--cor-amarelo);
     outline-offset: 2px;
 }
 
