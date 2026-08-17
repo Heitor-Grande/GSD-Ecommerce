@@ -1,0 +1,651 @@
+import { NextRequest } from "next/server";
+import { registrarAuditoria } from "@/utils/auditoria";
+import { consultarBancoDados } from "@/services/database";
+import { enviarEmail } from "@/services/email";
+import { normalizarCampoOpcional, validarEmail, validarStringComConteudo } from "@/utils/validacoes";
+import { criarHash } from "@/utils/criptografia";
+import { obterIdUsuarioAutenticado } from "@/utils/autenticacao";
+import { verificarEmpresaPertenceAoUsuario } from "@/utils/empresaUsuario";
+import { verificarPermissaoAPI } from "@/utils/permissoes";
+import { criarRespostaApi } from "@/utils/respostaApi";
+
+type UsuarioListado = {
+    id: number;
+    nome: string;
+    email: string;
+    telefone: string | null;
+    documento: string | null;
+    perfil_id: number | null;
+    perfil_nome: string | null;
+    ativo: boolean;
+    criado_em: Date;
+};
+
+type UsuarioDetalhado = UsuarioListado & {
+    isAdmin: boolean;
+    atualizado_em: Date;
+};
+
+type CadastroUsuarioBody = {
+    nome?: string;
+    email?: string;
+    senha?: string;
+    confirmarSenha?: string;
+    telefone?: string;
+    documento?: string;
+    perfilId?: unknown;
+    empresaNavegacaoId?: unknown;
+};
+
+type AtualizacaoUsuarioBody = CadastroUsuarioBody & {
+    id?: unknown;
+    ativo?: unknown;
+};
+
+function normalizarPerfilId(valor: unknown): number | null {
+    if (valor === null || valor === "" || typeof valor === "undefined") {
+        return null;
+    }
+
+    return Number(valor);
+}
+
+function normalizarIdEmpresaNavegacao(valor: unknown): number {
+    return Number(valor);
+}
+
+/**
+ * Escapa textos dinâmicos usados em HTML de e-mails transacionais.
+ * Use antes de interpolar dados de usuário em templates de e-mail.
+ */
+function escaparHtml(valor: string): string {
+    return valor
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+/**
+ * Monta o HTML do e-mail enviado somente após a criação de um novo usuário.
+ * Use para entregar as credenciais iniciais e o link de acesso ao template.
+ */
+function montarHtmlBoasVindasUsuario({
+    nome,
+    email,
+    senha,
+    linkAplicacao,
+}: {
+    nome: string;
+    email: string;
+    senha: string;
+    linkAplicacao: string;
+}): string {
+    const nomeSeguro = escaparHtml(nome);
+    const emailSeguro = escaparHtml(email);
+    const senhaSegura = escaparHtml(senha);
+    const linkSeguro = escaparHtml(linkAplicacao);
+
+    return `
+        <div style="margin:0;padding:32px;background-color:#f4f7fb;font-family:Arial,sans-serif;color:#273142;">
+            <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border:1px solid #dce3ec;border-radius:8px;overflow:hidden;">
+                <div style="padding:24px;background-color:#111827;color:#e5edf8;">
+                    <h1 style="margin:0;font-size:22px;line-height:1.3;">Bem-vindo ao Template Next.js</h1>
+                    <p style="margin:8px 0 0;color:#94a3b8;font-size:14px;">Sua conta foi criada com sucesso.</p>
+                </div>
+
+                <div style="padding:28px 24px;">
+                    <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">
+                        Olá, ${nomeSeguro}. Seja bem-vindo.
+                    </p>
+
+                    <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#6c757d;">
+                        Esta aplicação template oferece uma base administrativa reutilizável com login, permissões, empresas, usuários, configurações e componentes prontos para evoluir novos projetos.
+                    </p>
+
+                    <div style="margin:0 0 22px;padding:18px;border:1px solid #dce3ec;border-radius:8px;background-color:#f8fafc;">
+                        <p style="margin:0 0 10px;font-size:14px;line-height:1.5;"><strong>E-mail:</strong> ${emailSeguro}</p>
+                        <p style="margin:0;font-size:14px;line-height:1.5;"><strong>Senha:</strong> ${senhaSegura}</p>
+                    </div>
+
+                    <p style="margin:0 0 18px;font-size:15px;line-height:1.5;color:#6c757d;">
+                        Acesse a aplicação pelo link abaixo:
+                    </p>
+
+                    <p style="margin:0 0 22px;">
+                        <a href="${linkSeguro}" style="display:inline-block;padding:12px 18px;background-color:#0d6efd;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:bold;">
+                            Acessar aplicação
+                        </a>
+                    </p>
+
+                    <p style="margin:0;color:#6c757d;font-size:13px;line-height:1.5;">
+                        Recomendamos alterar a senha no primeiro acesso.
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Tenta enviar o e-mail de boas-vindas sem desfazer o usuário já cadastrado.
+ * Use depois que a criação e o vínculo inicial forem persistidos com sucesso.
+ */
+async function enviarEmailBoasVindasUsuario(dadosEmail: {
+    nome: string;
+    email: string;
+    senha: string;
+    linkAplicacao: string;
+}): Promise<boolean> {
+    try {
+        await enviarEmail({
+            to: dadosEmail.email,
+            subject: "Bem-vindo ao Template Next.js",
+            html: montarHtmlBoasVindasUsuario(dadosEmail),
+        });
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Endpoint GET de usuários.
+ * Use para alimentar tabelas de listagem sem retornar dados sensíveis como senha_hash.
+ */
+export async function GET(request: NextRequest) {
+    try {
+        const respostaPermissao = await verificarPermissaoAPI({
+            request: request,
+            recurso: "usuario",
+            acao: "visualizar",
+        });
+
+        if (respostaPermissao) {
+            return respostaPermissao;
+        }
+
+        const empresaNavegacaoId = normalizarIdEmpresaNavegacao(request.nextUrl.searchParams.get("empresaNavegacaoId"));
+
+        if (!Number.isInteger(empresaNavegacaoId) || empresaNavegacaoId <= 0) {
+            return criarRespostaApi(false, "Informe uma empresa de navegação válida.", null, 400);
+        }
+
+        const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
+            request: request,
+            idEmpresa: empresaNavegacaoId,
+        });
+
+        if (!empresaPertenceAoUsuario) {
+            return criarRespostaApi(false, "Você não possui vínculo com a empresa de navegação.", null, 403);
+        }
+
+        const id = Number(request.nextUrl.searchParams.get("id"));
+
+        if (Number.isInteger(id) && id > 0) {
+            const resultadoUsuario = await consultarBancoDados<UsuarioDetalhado>(
+                `
+                    select
+                        u.id,
+                        u.nome,
+                        u.email,
+                        u.telefone,
+                        u.documento,
+                        u.perfil_id,
+                        p.nome as perfil_nome,
+                        u.ativo,
+                        u."isAdmin",
+                        u.criado_em,
+                        u.atualizado_em
+                    from usuarios u
+                    inner join usuarios_empresas ue on ue.usuario_id = u.id
+                    left join perfil p on p.id = u.perfil_id
+                    where u.id = $1
+                        and ue.empresa_id = $2
+                    limit 1
+                `,
+                [id, empresaNavegacaoId]
+            );
+
+            const usuario = resultadoUsuario.rows[0];
+
+            if (!usuario) {
+                return criarRespostaApi(false, "Usuário não encontrado.", null, 404);
+            }
+
+            return criarRespostaApi(true, "Usuário carregado com sucesso.", usuario);
+        }
+
+        const resultado = await consultarBancoDados<UsuarioListado>(
+            `
+                select
+                    u.id,
+                    u.nome,
+                    u.email,
+                    u.telefone,
+                    u.documento,
+                    u.perfil_id,
+                    p.nome as perfil_nome,
+                    u.ativo,
+                    u.criado_em
+                from usuarios u
+                inner join usuarios_empresas ue on ue.usuario_id = u.id
+                left join perfil p on p.id = u.perfil_id
+                where ue.empresa_id = $1
+                order by u.criado_em desc
+            `,
+            [empresaNavegacaoId]
+        );
+
+        return criarRespostaApi(true, "Usuários listados com sucesso.", resultado.rows);
+    } catch {
+        return criarRespostaApi<UsuarioListado[]>(false, "Não foi possível listar os usuários.", [], 500);
+    }
+}
+
+/**
+ * Endpoint POST de usuários.
+ * Valida dados básicos, cria hash da senha e cadastra o usuário sem retornar dados sensíveis.
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const respostaPermissao = await verificarPermissaoAPI({
+            request: request,
+            recurso: "usuario",
+            acao: "criar",
+        });
+
+        if (respostaPermissao) {
+            return respostaPermissao;
+        }
+
+        const body = await request.json() as CadastroUsuarioBody;
+        const empresaNavegacaoId = normalizarIdEmpresaNavegacao(body.empresaNavegacaoId);
+
+        if (!Number.isInteger(empresaNavegacaoId) || empresaNavegacaoId <= 0) {
+            return criarRespostaApi(false, "Informe uma empresa de navegação válida.", null, 400);
+        }
+
+        const idUsuarioCriador = obterIdUsuarioAutenticado(request);
+
+        if (!idUsuarioCriador) {
+            return criarRespostaApi(false, "Sessão inválida ou expirada.", null, 401);
+        }
+
+        const nome = validarStringComConteudo(body.nome) ? body.nome.trim() : "";
+        const email = validarStringComConteudo(body.email) ? body.email.trim().toLowerCase() : "";
+        const senha = validarStringComConteudo(body.senha) ? body.senha : "";
+        const confirmarSenha = validarStringComConteudo(body.confirmarSenha) ? body.confirmarSenha : "";
+        const telefone = normalizarCampoOpcional(body.telefone);
+        const documento = normalizarCampoOpcional(body.documento);
+        const perfilId = normalizarPerfilId(body.perfilId);
+
+        if (!nome || !validarEmail(email) || senha.length < 6) {
+            return criarRespostaApi(false, "Informe nome, e-mail válido e senha com pelo menos 6 caracteres.", null, 400);
+        }
+
+        if (perfilId !== null && (!Number.isInteger(perfilId) || perfilId <= 0)) {
+            return criarRespostaApi(false, "Informe um perfil válido para o usuário.", null, 400);
+        }
+
+        if (senha !== confirmarSenha) {
+            return criarRespostaApi(false, "As senhas informadas não conferem.", null, 400);
+        }
+
+        const senhaCriptografada = criarHash(senha);
+
+        const resultadoUsuario = await consultarBancoDados<{ id: number }>(
+            `
+                insert into usuarios (
+                    nome,
+                    email,
+                    senha_hash,
+                    salt,
+                    telefone,
+                    documento,
+                    perfil_id,
+                    empresa_padrao
+                )
+                values ($1, $2, $3, $4, $5, $6, $7, $8)
+                returning id
+            `,
+            [
+                nome,
+                email,
+                senhaCriptografada.hash,
+                senhaCriptografada.salt,
+                telefone,
+                documento,
+                perfilId,
+                empresaNavegacaoId,
+            ]
+        );
+
+        await consultarBancoDados(
+            `
+                insert into usuarios_empresas (
+                    usuario_id,
+                    empresa_id,
+                    criado_por
+                )
+                values ($1, $2, $3)
+                on conflict (usuario_id, empresa_id) do nothing
+            `,
+            [resultadoUsuario.rows[0].id, empresaNavegacaoId, idUsuarioCriador]
+        );
+
+        const resultadoUsuarioCriado = await consultarBancoDados<UsuarioDetalhado>(
+            `
+                select
+                    u.id,
+                    u.nome,
+                    u.email,
+                    u.telefone,
+                    u.documento,
+                    u.perfil_id,
+                    p.nome as perfil_nome,
+                    u.ativo,
+                    u."isAdmin",
+                    u.criado_em,
+                    u.atualizado_em
+                from usuarios u
+                left join perfil p on p.id = u.perfil_id
+                where u.id = $1
+                limit 1
+            `,
+            [resultadoUsuario.rows[0].id]
+        );
+
+        await registrarAuditoria({
+            acao: "CRIAR",
+            usuarioId: idUsuarioCriador,
+            empresaId: empresaNavegacaoId,
+            dadosAntes: null,
+            dadosDepois: resultadoUsuarioCriado.rows[0] ?? { id: resultadoUsuario.rows[0].id },
+            metodoHttp: "POST",
+            rota: request.nextUrl.pathname,
+        });
+
+        const emailEnviado = await enviarEmailBoasVindasUsuario({
+            nome: nome,
+            email: email,
+            senha: senha,
+            linkAplicacao: request.nextUrl.origin,
+        });
+
+        if (!emailEnviado) {
+            return criarRespostaApi(true, "Usuário cadastrado com sucesso, mas não foi possível enviar o e-mail de acesso.", null, 201);
+        }
+
+        return criarRespostaApi(true, "Usuário cadastrado com sucesso.", null, 201);
+    } catch (erro) {
+        if (erro instanceof SyntaxError) {
+            return criarRespostaApi(false, "Requisição inválida.", null, 400);
+        }
+
+        if (erro instanceof Error && "code" in erro && erro.code === "23505") {
+            return criarRespostaApi(false, "Já existe um usuário cadastrado com este e-mail.", null, 409);
+        }
+
+        if (erro instanceof Error && "code" in erro && erro.code === "23503") {
+            return criarRespostaApi(false, "O perfil informado não foi encontrado.", null, 400);
+        }
+
+        return criarRespostaApi(false, "Não foi possível cadastrar o usuário.", null, 500);
+    }
+}
+
+/**
+ * Endpoint PUT de usuários.
+ * Atualiza dados cadastrais, perfil, status e senha opcional sem retornar informações sensíveis.
+ */
+export async function PUT(request: NextRequest) {
+    try {
+        const respostaPermissao = await verificarPermissaoAPI({
+            request: request,
+            recurso: "usuario",
+            acao: "atualizar",
+        });
+
+        if (respostaPermissao) {
+            return respostaPermissao;
+        }
+
+        const body = await request.json() as AtualizacaoUsuarioBody;
+        const idUsuarioAtualizacao = obterIdUsuarioAutenticado(request);
+
+        if (!idUsuarioAtualizacao) {
+            return criarRespostaApi(false, "Sessão inválida ou expirada.", null, 401);
+        }
+
+        const id = typeof body.id === "number" ? body.id : Number(body.id);
+        const nome = validarStringComConteudo(body.nome) ? body.nome.trim() : "";
+        const email = validarStringComConteudo(body.email) ? body.email.trim().toLowerCase() : "";
+        const senha = validarStringComConteudo(body.senha) ? body.senha : "";
+        const confirmarSenha = validarStringComConteudo(body.confirmarSenha) ? body.confirmarSenha : "";
+        const telefone = normalizarCampoOpcional(body.telefone);
+        const documento = normalizarCampoOpcional(body.documento);
+        const perfilId = normalizarPerfilId(body.perfilId);
+        const ativo = typeof body.ativo === "boolean" ? body.ativo : null;
+        const empresaNavegacaoId = normalizarIdEmpresaNavegacao(body.empresaNavegacaoId);
+        const empresaAuditoriaId = Number.isInteger(empresaNavegacaoId) && empresaNavegacaoId > 0
+            ? empresaNavegacaoId
+            : null;
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return criarRespostaApi(false, "Informe um usuário válido para atualização.", null, 400);
+        }
+
+        if (!nome || nome.length > 120 || !validarEmail(email) || email.length > 180) {
+            return criarRespostaApi(false, "Informe nome e e-mail válido dentro do limite permitido.", null, 400);
+        }
+
+        if ((telefone && telefone.length > 20) || (documento && documento.length > 20)) {
+            return criarRespostaApi(false, "Telefone e documento devem respeitar o limite de caracteres.", null, 400);
+        }
+
+        if (perfilId !== null && (!Number.isInteger(perfilId) || perfilId <= 0)) {
+            return criarRespostaApi(false, "Informe um perfil válido para o usuário.", null, 400);
+        }
+
+        if (senha && senha.length < 6) {
+            return criarRespostaApi(false, "A senha deve ter pelo menos 6 caracteres.", null, 400);
+        }
+
+        if (senha && senha !== confirmarSenha) {
+            return criarRespostaApi(false, "As senhas informadas não conferem.", null, 400);
+        }
+
+        const senhaCriptografada = senha ? criarHash(senha) : null;
+
+        const resultadoUsuarioAntes = await consultarBancoDados<UsuarioDetalhado>(
+            `
+                select
+                    u.id,
+                    u.nome,
+                    u.email,
+                    u.telefone,
+                    u.documento,
+                    u.perfil_id,
+                    p.nome as perfil_nome,
+                    u.ativo,
+                    u."isAdmin",
+                    u.criado_em,
+                    u.atualizado_em
+                from usuarios u
+                left join perfil p on p.id = u.perfil_id
+                where u.id = $1
+                limit 1
+            `,
+            [id]
+        );
+        const usuarioAntes = resultadoUsuarioAntes.rows[0];
+
+        const resultado = await consultarBancoDados<UsuarioListado>(
+            `
+                update usuarios
+                set
+                    nome = $1,
+                    email = $2,
+                    telefone = $3,
+                    documento = $4,
+                    perfil_id = $5,
+                    ativo = coalesce($6, ativo),
+                    senha_hash = coalesce($7, senha_hash),
+                    salt = coalesce($8, salt),
+                    atualizado_em = now()
+                where id = $9
+                returning id
+            `,
+            [
+                nome,
+                email,
+                telefone,
+                documento,
+                perfilId,
+                ativo,
+                senhaCriptografada?.hash ?? null,
+                senhaCriptografada?.salt ?? null,
+                id,
+            ]
+        );
+
+        if (!resultado.rows[0]) {
+            return criarRespostaApi(false, "Usuário não encontrado.", null, 404);
+        }
+
+        const resultadoUsuarioDepois = await consultarBancoDados<UsuarioDetalhado>(
+            `
+                select
+                    u.id,
+                    u.nome,
+                    u.email,
+                    u.telefone,
+                    u.documento,
+                    u.perfil_id,
+                    p.nome as perfil_nome,
+                    u.ativo,
+                    u."isAdmin",
+                    u.criado_em,
+                    u.atualizado_em
+                from usuarios u
+                left join perfil p on p.id = u.perfil_id
+                where u.id = $1
+                limit 1
+            `,
+            [id]
+        );
+
+        await registrarAuditoria({
+            acao: "ATUALIZAR",
+            usuarioId: idUsuarioAtualizacao,
+            empresaId: empresaAuditoriaId,
+            dadosAntes: usuarioAntes ?? null,
+            dadosDepois: resultadoUsuarioDepois.rows[0] ?? null,
+            metodoHttp: "PUT",
+            rota: request.nextUrl.pathname,
+        });
+
+        return criarRespostaApi(true, "Usuário atualizado com sucesso.", null);
+    } catch (erro) {
+        if (erro instanceof SyntaxError) {
+            return criarRespostaApi(false, "Requisição inválida.", null, 400);
+        }
+
+        if (erro instanceof Error && "code" in erro && erro.code === "23505") {
+            return criarRespostaApi(false, "Já existe um usuário cadastrado com este e-mail.", null, 409);
+        }
+
+        if (erro instanceof Error && "code" in erro && erro.code === "23503") {
+            return criarRespostaApi(false, "O perfil informado não foi encontrado.", null, 400);
+        }
+
+        return criarRespostaApi(false, "Não foi possível atualizar o usuário.", null, 500);
+    }
+}
+
+/**
+ * Endpoint DELETE de usuários.
+ * Remove o usuário pelo id informado na query string sem retornar dados sensíveis.
+ */
+export async function DELETE(request: NextRequest) {
+    try {
+        const respostaPermissao = await verificarPermissaoAPI({
+            request: request,
+            recurso: "usuario",
+            acao: "deletar",
+        });
+
+        if (respostaPermissao) {
+            return respostaPermissao;
+        }
+
+        const idUsuarioExclusao = obterIdUsuarioAutenticado(request);
+
+        if (!idUsuarioExclusao) {
+            return criarRespostaApi(false, "Sessão inválida ou expirada.", null, 401);
+        }
+
+        const id = Number(request.nextUrl.searchParams.get("id"));
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return criarRespostaApi(false, "Informe um usuário válido para exclusão.", null, 400);
+        }
+
+        const resultadoUsuarioAntes = await consultarBancoDados<UsuarioDetalhado>(
+            `
+                select
+                    u.id,
+                    u.nome,
+                    u.email,
+                    u.telefone,
+                    u.documento,
+                    u.perfil_id,
+                    p.nome as perfil_nome,
+                    u.ativo,
+                    u."isAdmin",
+                    u.criado_em,
+                    u.atualizado_em
+                from usuarios u
+                left join perfil p on p.id = u.perfil_id
+                where u.id = $1
+                limit 1
+            `,
+            [id]
+        );
+        const usuarioAntes = resultadoUsuarioAntes.rows[0];
+
+        const resultado = await consultarBancoDados<UsuarioListado>(
+            `
+                delete from usuarios
+                where id = $1
+                returning id
+            `,
+            [id]
+        );
+
+        if (!resultado.rows[0]) {
+            return criarRespostaApi(false, "Usuário não encontrado.", null, 404);
+        }
+
+        await registrarAuditoria({
+            acao: "EXCLUIR",
+            usuarioId: idUsuarioExclusao === id ? null : idUsuarioExclusao,
+            empresaId: null,
+            dadosAntes: usuarioAntes ?? null,
+            dadosDepois: null,
+            metodoHttp: "DELETE",
+            rota: request.nextUrl.pathname,
+        });
+
+        return criarRespostaApi(true, "Usuário excluído com sucesso.", null);
+    } catch (erro) {
+        if (erro instanceof Error && "code" in erro && erro.code === "23503") {
+            return criarRespostaApi(false, "Não é possível excluir este usuário porque ele possui vínculos.", null, 400);
+        }
+
+        return criarRespostaApi(false, "Não foi possível excluir o usuário.", null, 500);
+    }
+}
