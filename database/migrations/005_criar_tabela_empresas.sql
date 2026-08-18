@@ -26,6 +26,12 @@ create index if not exists empresas_atualizado_por_idx
 alter table public.empresas
     add column if not exists superior_id bigint null;
 
+alter table public.empresas
+    add column if not exists raioenvio varchar(20) null;
+
+alter table public.empresas
+    add column if not exists valorfreteporkm numeric(12, 2) null;
+
 do $$
 begin
     if not exists (

@@ -8,9 +8,10 @@ import ModalConfirmacao from "@/components/modals/confirmModal";
 import { ModalCarregamento } from "@/components/modals/loading";
 import ModalResposta from "@/components/modals/responseModal";
 import { requisitarAPI } from "@/utils/api";
+import { aplicarMascaraMoedaRealPorCentavos, converterMoedaRealFormatadaParaNumero } from "@/utils/mascaras";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { FaBuilding, FaExclamationTriangle, FaSave, FaTimes, FaTrash, FaUser } from "react-icons/fa";
+import { FaBuilding, FaCog, FaExclamationTriangle, FaSave, FaTimes, FaTrash, FaUser } from "react-icons/fa";
 
 type DadosCadastroEmpresa = {
     id: number | null;
@@ -19,6 +20,8 @@ type DadosCadastroEmpresa = {
     email: string;
     telefone: string;
     superior: OpcaoSuperior | null;
+    valorFretePorKm: string;
+    raioEnvio: OpcaoRaioEnvio | null;
     ativo: boolean;
     criadoEm: string;
     atualizadoEm: string;
@@ -29,6 +32,11 @@ type OpcaoSuperior = {
     value: string;
 };
 
+type OpcaoRaioEnvio = {
+    label: string;
+    value: "estadual" | "nacional";
+};
+
 type EmpresaDetalhadaApi = {
     id: number;
     fantasia: string;
@@ -37,6 +45,8 @@ type EmpresaDetalhadaApi = {
     telefone: string | null;
     superior_id: number | null;
     superior_fantasia: string | null;
+    raioenvio: "estadual" | "nacional" | null;
+    valorfreteporkm: number | string | null;
     ativo: boolean;
     criado_em: string;
     atualizado_em: string;
@@ -48,7 +58,7 @@ type ModalCadastroEmpresaProps = {
     aoFechar: () => void;
 };
 
-type AbaCadastroEmpresa = "dados" | "usuarios";
+type AbaCadastroEmpresa = "dados" | "usuarios" | "configuracoesGerais";
 
 const estadoInicialFormulario: DadosCadastroEmpresa = {
     id: null,
@@ -57,6 +67,8 @@ const estadoInicialFormulario: DadosCadastroEmpresa = {
     email: "",
     telefone: "",
     superior: null,
+    valorFretePorKm: "",
+    raioEnvio: null,
     ativo: true,
     criadoEm: "",
     atualizadoEm: "",
@@ -96,11 +108,18 @@ function mapearEmpresaParaFormulario(empresa: EmpresaDetalhadaApi): DadosCadastr
                 value: String(empresa.superior_id),
             }
             : null,
+        valorFretePorKm: aplicarMascaraMoedaRealPorCentavos(String(empresa.valorfreteporkm ?? "")),
+        raioEnvio: opcoesRaioEnvio.find((opcao) => opcao.value === empresa.raioenvio) ?? null,
         ativo: empresa.ativo,
         criadoEm: formatarDataHoraFormulario(empresa.criado_em),
         atualizadoEm: formatarDataHoraFormulario(empresa.atualizado_em),
     };
 }
+
+const opcoesRaioEnvio: OpcaoRaioEnvio[] = [
+    { label: "Estadual", value: "estadual" },
+    { label: "Nacional", value: "nacional" },
+];
 
 /**
  * Modal local de cadastro e visualização de empresa.
@@ -121,10 +140,14 @@ export default function ModalCadastroEmpresa({
 
     const estaVisualizandoEmpresa = typeof idEmpresa === "number" && idEmpresa > 0;
 
-    function atualizarCampoFormulario(campo: keyof DadosCadastroEmpresa, valor: string | boolean | OpcaoSuperior | null) {
+    function atualizarCampoFormulario(campo: keyof DadosCadastroEmpresa, valor: string | boolean | OpcaoSuperior | OpcaoRaioEnvio | null) {
         setFormulario((estadoAtual) => ({
             ...estadoAtual,
-            [campo]: campo === "cnpj" && typeof valor === "string" ? formatarCnpj(valor) : valor,
+            [campo]: campo === "cnpj" && typeof valor === "string"
+                ? formatarCnpj(valor)
+                : campo === "valorFretePorKm" && typeof valor === "string"
+                    ? aplicarMascaraMoedaRealPorCentavos(valor)
+                    : valor,
         }));
     }
 
@@ -209,6 +232,8 @@ export default function ModalCadastroEmpresa({
                     email: formulario.email,
                     telefone: formulario.telefone,
                     superiorId: formulario.superior?.value ?? null,
+                    valorFretePorKm: converterMoedaRealFormatadaParaNumero(formulario.valorFretePorKm),
+                    raioEnvio: formulario.raioEnvio?.value ?? null,
                     ativo: formulario.ativo,
                 },
             });
@@ -299,6 +324,15 @@ export default function ModalCadastroEmpresa({
                             >
                                 <FaBuilding size={14} />
                                 Dados
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition ${abaAtiva === "configuracoesGerais" ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50"}`}
+                                onClick={() => setAbaAtiva("configuracoesGerais")}
+                            >
+                                <FaCog size={14} />
+                                Configurações Gerais
                             </button>
 
                             <button
@@ -427,6 +461,38 @@ export default function ModalCadastroEmpresa({
                                 />
                             </div>
 
+                            </div>
+                        )}
+
+                        {abaAtiva === "configuracoesGerais" && (
+                            <div className="grid gap-4 md:grid-cols-12">
+                                <div className="md:col-span-6">
+                                    <CampoTexto
+                                        id="empresa-valor-frete-por-km"
+                                        label="Valor do frete por km"
+                                        type="text"
+                                        value={formulario.valorFretePorKm}
+                                        placeholder="R$ 0,00"
+                                        onChange={(event) => atualizarCampoFormulario("valorFretePorKm", event.target.value)}
+                                        disabled={carregando}
+                                        required={false}
+                                        className="mb-0"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-6">
+                                    <Seletor
+                                        id="empresa-raio-envio"
+                                        label="Raio de envio"
+                                        options={opcoesRaioEnvio}
+                                        value={formulario.raioEnvio}
+                                        onChange={(opcao) => atualizarCampoFormulario("raioEnvio", opcao)}
+                                        placeholder="Selecione o raio de envio"
+                                        isDisabled={carregando}
+                                        isClearable={false}
+                                        className="mb-0"
+                                    />
+                                </div>
                             </div>
                         )}
 

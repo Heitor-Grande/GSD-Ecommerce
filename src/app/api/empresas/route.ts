@@ -14,6 +14,8 @@ type EmpresaListada = {
     telefone: string | null;
     superior_id: number | null;
     superior_fantasia: string | null;
+    raioenvio: string | null;
+    valorfreteporkm: number | string | null;
     ativo: boolean;
     criado_em: Date;
     atualizado_em: Date;
@@ -36,6 +38,8 @@ type CadastroEmpresaBody = {
     email?: unknown;
     telefone?: unknown;
     superiorId?: unknown;
+    raioEnvio?: unknown;
+    valorFretePorKm?: unknown;
     ativo?: unknown;
 };
 
@@ -49,6 +53,32 @@ function normalizarSuperiorId(valor: unknown): number | null {
     }
 
     return Number(valor);
+}
+
+function normalizarRaioEnvio(valor: unknown): string {
+    return validarStringComConteudo(valor) ? valor.trim().toLowerCase() : "";
+}
+
+function valorFreteFoiInformado(valor: unknown): boolean {
+    return valor !== null && typeof valor !== "undefined" && valor !== "";
+}
+
+function normalizarValorFretePorKm(valor: unknown): number | null {
+    if (!valorFreteFoiInformado(valor)) {
+        return null;
+    }
+
+    if (typeof valor === "number") {
+        return Number.isFinite(valor) && valor >= 0 ? valor : null;
+    }
+
+    const texto = String(valor).trim();
+    const valorNormalizado = texto.includes(",")
+        ? texto.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")
+        : texto.replace(/[^\d.-]/g, "");
+    const numero = Number(valorNormalizado);
+
+    return Number.isFinite(numero) && numero >= 0 ? numero : null;
 }
 
 /**
@@ -193,6 +223,8 @@ export async function DELETE(request: NextRequest) {
                     e.telefone,
                     e.superior_id,
                     superior.fantasia as superior_fantasia,
+                    e.raioenvio,
+                    e.valorfreteporkm,
                     e.ativo,
                     e.criado_em,
                     e.atualizado_em
@@ -220,6 +252,8 @@ export async function DELETE(request: NextRequest) {
                     telefone,
                     superior_id,
                     null::varchar as superior_fantasia,
+                    raioenvio,
+                    valorfreteporkm,
                     ativo,
                     criado_em,
                     atualizado_em
@@ -287,6 +321,8 @@ export async function GET(request: NextRequest) {
                         e.telefone,
                         e.superior_id,
                         superior.fantasia as superior_fantasia,
+                        e.raioenvio,
+                        e.valorfreteporkm,
                         e.ativo,
                         e.criado_em,
                         e.atualizado_em
@@ -321,6 +357,8 @@ export async function GET(request: NextRequest) {
                         e.telefone,
                         e.superior_id,
                         null::varchar as superior_fantasia,
+                        e.raioenvio,
+                        e.valorfreteporkm,
                         e.ativo,
                         e.criado_em,
                         e.atualizado_em
@@ -393,6 +431,8 @@ export async function GET(request: NextRequest) {
                     e.telefone,
                     e.superior_id,
                     superior.fantasia as superior_fantasia,
+                    e.raioenvio,
+                    e.valorfreteporkm,
                     e.ativo,
                     e.criado_em,
                     e.atualizado_em
@@ -439,6 +479,8 @@ export async function POST(request: NextRequest) {
         const email = normalizarCampoOpcional(body.email)?.toLowerCase() ?? null;
         const telefone = normalizarCampoOpcional(body.telefone);
         const superiorId = normalizarSuperiorId(body.superiorId);
+        const raioEnvio = normalizarRaioEnvio(body.raioEnvio);
+        const valorFretePorKm = normalizarValorFretePorKm(body.valorFretePorKm);
         const ativo = obterBooleanoAtivo(body.ativo);
 
         if (!fantasia || fantasia.length > 160 || cnpj.length !== 14) {
@@ -451,6 +493,14 @@ export async function POST(request: NextRequest) {
 
         if (telefone && telefone.length > 20) {
             return criarRespostaApi(false, "Telefone deve respeitar o limite de caracteres.", null, 400);
+        }
+
+        if (!raioEnvio || !["estadual", "nacional"].includes(raioEnvio)) {
+            return criarRespostaApi(false, "Preencha o raio de Envio nas configurações gerais da empresa", null, 400);
+        }
+
+        if (valorFreteFoiInformado(body.valorFretePorKm) && valorFretePorKm === null) {
+            return criarRespostaApi(false, "Informe um valor de frete por km valido.", null, 400);
         }
 
         const superiorValido = await verificarSuperiorValido({
@@ -470,10 +520,12 @@ export async function POST(request: NextRequest) {
                     email,
                     telefone,
                     superior_id,
+                    raioenvio,
+                    valorfreteporkm,
                     ativo,
                     criado_por
                 )
-                values ($1, $2, $3, $4, $5, $6, $7)
+                values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 returning id,
                     fantasia,
                     cnpj,
@@ -481,11 +533,13 @@ export async function POST(request: NextRequest) {
                     telefone,
                     superior_id,
                     null::varchar as superior_fantasia,
+                    raioenvio,
+                    valorfreteporkm,
                     ativo,
                     criado_em,
                     atualizado_em
             `,
-            [fantasia, cnpj, email, telefone, superiorId, ativo, idUsuario]
+            [fantasia, cnpj, email, telefone, superiorId, raioEnvio, valorFretePorKm, ativo, idUsuario]
         );
 
         await consultarBancoDados(
@@ -554,6 +608,8 @@ export async function PUT(request: NextRequest) {
         const email = normalizarCampoOpcional(body.email)?.toLowerCase() ?? null;
         const telefone = normalizarCampoOpcional(body.telefone);
         const superiorId = normalizarSuperiorId(body.superiorId);
+        const raioEnvio = normalizarRaioEnvio(body.raioEnvio);
+        const valorFretePorKm = normalizarValorFretePorKm(body.valorFretePorKm);
         const ativo = obterBooleanoAtivo(body.ativo);
 
         if (!Number.isInteger(id) || id <= 0) {
@@ -570,6 +626,14 @@ export async function PUT(request: NextRequest) {
 
         if (telefone && telefone.length > 20) {
             return criarRespostaApi(false, "Telefone deve respeitar o limite de caracteres.", null, 400);
+        }
+
+        if (!raioEnvio || !["estadual", "nacional"].includes(raioEnvio)) {
+            return criarRespostaApi(false, "Preencha o raio de Envio nas configurações gerais da empresa", null, 400);
+        }
+
+        if (valorFreteFoiInformado(body.valorFretePorKm) && valorFretePorKm === null) {
+            return criarRespostaApi(false, "Informe um valor de frete por km valido.", null, 400);
         }
 
         const superiorValido = await verificarSuperiorValido({
@@ -592,6 +656,8 @@ export async function PUT(request: NextRequest) {
                     e.telefone,
                     e.superior_id,
                     superior.fantasia as superior_fantasia,
+                    e.raioenvio,
+                    e.valorfreteporkm,
                     e.ativo,
                     e.criado_em,
                     e.atualizado_em
@@ -613,10 +679,12 @@ export async function PUT(request: NextRequest) {
                     email = $3,
                     telefone = $4,
                     superior_id = $5,
-                    ativo = $6,
-                    atualizado_por = $7,
+                    raioenvio = $6,
+                    valorfreteporkm = $7,
+                    ativo = $8,
+                    atualizado_por = $9,
                     atualizado_em = now()
-                where id = $8
+                where id = $10
                 returning id,
                     fantasia,
                     cnpj,
@@ -624,11 +692,13 @@ export async function PUT(request: NextRequest) {
                     telefone,
                     superior_id,
                     null::varchar as superior_fantasia,
+                    raioenvio,
+                    valorfreteporkm,
                     ativo,
                     criado_em,
                     atualizado_em
             `,
-            [fantasia, cnpj, email, telefone, superiorId, ativo, idUsuario, id]
+            [fantasia, cnpj, email, telefone, superiorId, raioEnvio, valorFretePorKm, ativo, idUsuario, id]
         );
 
         if (!resultado.rows[0]) {
