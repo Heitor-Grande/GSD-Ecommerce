@@ -6,6 +6,7 @@ import { criarRespostaApi } from "@/utils/respostaApi";
 export type RecursoPermissao =
     | "usuario"
     | "empresa"
+    | "catalogo"
     | "vinculoUsuarioEmpresa"
     | "configuracao"
     | "perfil"

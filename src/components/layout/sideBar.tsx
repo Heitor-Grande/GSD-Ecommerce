@@ -9,6 +9,7 @@ import { ReactNode, useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
     FaBars,
+    FaBoxes,
     FaBuilding,
     FaChevronDown,
     FaChevronRight,
@@ -30,7 +31,7 @@ type MenuItem = {
     children?: MenuItem[];
 };
 
-type RecursoPermissao = "dashboard" | "usuario" | "empresa" | "produto_empresa" | "configuracao" | "perfil" | "ticket";
+type RecursoPermissao = "dashboard" | "usuario" | "empresa" | "catalogo" | "produto_empresa" | "configuracao" | "perfil" | "ticket";
 type AcaoPermissao = "visualizar" | "criar" | "atualizar" | "deletar";
 type PermissoesPerfil = Record<RecursoPermissao, Record<AcaoPermissao, boolean>>;
 
@@ -156,6 +157,7 @@ export default function BarraLateral({
     const podeVisualizarDashboard = Boolean(permissoesPerfil?.dashboard?.visualizar);
     const podeVisualizarUsuario = Boolean(permissoesPerfil?.usuario?.visualizar);
     const podeVisualizarEmpresa = Boolean(permissoesPerfil?.empresa?.visualizar);
+    const podeVisualizarCatalogo = Boolean(permissoesPerfil?.catalogo?.visualizar);
     const podeVisualizarPerfil = Boolean(permissoesPerfil?.perfil?.visualizar);
     const podeVisualizarConfiguracao = Boolean(permissoesPerfil?.configuracao?.visualizar);
     const podeVisualizarTicket = Boolean(permissoesPerfil?.ticket?.visualizar);
@@ -175,6 +177,9 @@ export default function BarraLateral({
             : []),
         ...(podeVisualizarEmpresa
             ? [{ label: "Empresas", href: "/empresas", icon: <FaBuilding /> }]
+            : []),
+        ...(podeVisualizarCatalogo
+            ? [{ label: "Catálogo", href: "/catalogo", icon: <FaBoxes /> }]
             : []),
         ...(podeVisualizarTicket
             ? [{ label: "Tickets", href: "/tickets", icon: <FaTicketAlt /> }]

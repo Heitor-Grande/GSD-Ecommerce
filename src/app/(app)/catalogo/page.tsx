@@ -1,0 +1,62 @@
+"use client";
+
+import { Botao } from "@/components/inputs/button";
+import { useState } from "react";
+import { FaPlus, FaTags } from "react-icons/fa";
+import ModalCadastroProduto from "./components/modalCadastroProduto";
+
+/**
+ * Página inicial do catálogo.
+ * Use como menu de entrada para os cadastros de produtos e serviços vendidos no ecommerce.
+ */
+export default function PaginaCatalogo() {
+    const [modalCadastroAberto, setModalCadastroAberto] = useState(false);
+    const [idProdutoSelecionado, setIdProdutoSelecionado] = useState<number | null>(null);
+
+    return (
+        <div className="w-full">
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60">
+                <div className="grid gap-4 md:grid-cols-12 md:items-center">
+                    <div className="md:col-span-8 lg:col-span-9">
+                        <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold uppercase text-blue-600">
+                            <FaTags size={12} />
+                            Catálogo
+                        </span>
+                        <h1 className="mb-2 text-2xl font-bold text-slate-900">Cadastro de produtos do ecommerce</h1>
+                        <p className="mb-0 max-w-3xl text-sm leading-6 text-slate-500">
+                            Gerencie a base comercial de produtos, categorias e informações que serão usadas na vitrine da loja.
+                        </p>
+                    </div>
+
+                    <div className="md:col-span-4 lg:col-span-3">
+                        <Botao
+                            size="sm"
+                            label="Novo produto"
+                            icon={<FaPlus size={14} />}
+                            onClick={() => {
+                                setIdProdutoSelecionado(null);
+                                setModalCadastroAberto(true);
+                            }}
+                            disabled={false}
+                            loading={false}
+                            variant="primary"
+                            type="button"
+                            className="w-full"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {modalCadastroAberto && (
+                <ModalCadastroProduto
+                    aberto={modalCadastroAberto}
+                    idProduto={idProdutoSelecionado}
+                    aoFechar={() => {
+                        setModalCadastroAberto(false);
+                        setIdProdutoSelecionado(null);
+                    }}
+                />
+            )}
+        </div>
+    );
+}

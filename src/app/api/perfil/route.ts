@@ -10,6 +10,7 @@ type RecursoPermissaoPerfil =
     | "dashboard"
     | "usuario"
     | "empresa"
+    | "catalogo"
     | "vinculoUsuarioEmpresa"
     | "configuracao"
     | "perfil";
@@ -51,6 +52,7 @@ const recursosPermissao: RecursoPermissaoPerfil[] = [
     "dashboard",
     "usuario",
     "empresa",
+    "catalogo",
     "vinculoUsuarioEmpresa",
     "configuracao",
     "perfil",

@@ -31,3 +31,11 @@ export function converterMoedaRealFormatadaParaNumero(valor: string): number | n
 
     return Number(digitos) / 100;
 }
+
+/**
+ * Mantem apenas digitos inteiros em campos numericos simples.
+ * Use em inputs que precisam aceitar somente quantidade inteira.
+ */
+export function aplicarMascaraNumeroInteiro(valor: string): string {
+    return valor.replace(/\D/g, "");
+}

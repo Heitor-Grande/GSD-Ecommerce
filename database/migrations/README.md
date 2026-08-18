@@ -9,6 +9,8 @@ Execute os scripts em ordem crescente pelo prefixo numérico. Esta pasta contém
 3. `004_criar_tabela_perfil.sql`
 4. `005_criar_tabela_empresas.sql`
 5. `006_criar_tabela_usuarios_empresas.sql`
+6. `007_criar_tabela_auditoria.sql`
+7. `008_criar_tabela_produtos.sql`
 
 ## Tabela `usuarios`
 
