@@ -6,6 +6,7 @@ import { Seletor } from "@/components/inputs/select";
 import ModalConfirmacao from "@/components/modals/confirmModal";
 import { ModalCarregamento } from "@/components/modals/loading";
 import ModalResposta from "@/components/modals/responseModal";
+import { requisitarAPI } from "@/utils/api";
 import { aplicarMascaraMoedaRealPorCentavos, aplicarMascaraNumeroInteiro, converterMoedaRealFormatadaParaNumero } from "@/utils/mascaras";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
@@ -57,6 +58,8 @@ const estadoInicialFormulario: DadosCadastroProduto = {
     nomeImagemIlustrativa: "",
 };
 
+const CHAVE_EMPRESA_NAVEGACAO = "empresaNavegacaoId";
+
 /**
  * Modal local de cadastro e edição de produto.
  * Use no fluxo de catálogo para cadastrar, atualizar e excluir produtos do ecommerce.
@@ -66,7 +69,7 @@ export default function ModalCadastroProduto({
     idProduto,
     aoFechar,
 }: ModalCadastroProdutoProps) {
-    const [carregando] = useState(false);
+    const [carregando, setCarregando] = useState(false);
     const [formulario, setFormulario] = useState<DadosCadastroProduto>(estadoInicialFormulario);
     const [imagemPreviewUrl, setImagemPreviewUrl] = useState("");
     const [mensagemResposta, setMensagemResposta] = useState("");
@@ -135,8 +138,9 @@ export default function ModalCadastroProduto({
         aoFechar();
     }
 
-    function salvarProduto(event: FormEvent<HTMLFormElement>) {
+    async function salvarProduto(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        setMensagemResposta("");
 
         if (!formulario.categoria) {
             setMensagemResposta("Selecione a categoria do produto.");
@@ -150,6 +154,50 @@ export default function ModalCadastroProduto({
             setMensagemResposta("Informe o valor por unidade do produto.");
             return;
         }
+
+        const empresaNavegacaoId = localStorage.getItem(CHAVE_EMPRESA_NAVEGACAO);
+
+        if (!empresaNavegacaoId) {
+            setMensagemResposta("Selecione uma empresa de navegacao.");
+            return;
+        }
+
+        if (!formulario.imagemIlustrativa) {
+            setMensagemResposta("Informe a imagem ilustrativa do produto.");
+            return;
+        }
+
+        const dadosProduto = new FormData();
+        dadosProduto.append("idEmpresa", empresaNavegacaoId);
+        dadosProduto.append("nome", formulario.nome);
+        dadosProduto.append("categoria", formulario.categoria.value);
+        dadosProduto.append("valorPorUnidade", String(valorUnidadeNumerico));
+        dadosProduto.append("quantidadeEstoque", formulario.quantidadeEstoque);
+        dadosProduto.append("ativo", String(formulario.ativo));
+        dadosProduto.append("valorPromocional", String(formulario.valorPromocional));
+        dadosProduto.append("freteGratis", String(formulario.freteGratis));
+        dadosProduto.append("imagemIlustrativaArquivo", formulario.imagemIlustrativa);
+
+        setCarregando(true);
+
+        try {
+            await requisitarAPI("/api/catalogo", {
+                method: "POST",
+                body: dadosProduto,
+            });
+
+            fecharModalCadastroProduto();
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error
+                ? erro.message
+                : "Nao foi possivel salvar o produto.";
+
+            setMensagemResposta(mensagemErro);
+        } finally {
+            setCarregando(false);
+        }
+
+        return;
 
         setMensagemResposta("Os campos do produto ainda serão definidos.");
     }

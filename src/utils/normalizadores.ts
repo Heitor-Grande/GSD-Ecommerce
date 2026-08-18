@@ -55,30 +55,6 @@ export function normalizarQuantidadeEstoque(valor: unknown): number | null {
 }
 
 /**
- * Normaliza quantidade inteira recebida como numero ou texto.
- * Retorna 0 quando o valor estiver vazio ou nao representar um inteiro valido.
- */
-export function normalizarQuantidadeEstoque(valor: unknown): number | null {
-    if (valor === null || typeof valor === "undefined" || valor === "") {
-        return 0;
-    }
-
-    if (typeof valor === "number") {
-        return Number.isInteger(valor) ? valor : 0;
-    }
-
-    const digitos = String(valor).replace(/\D/g, "");
-
-    if (!digitos) {
-        return 0;
-    }
-
-    const quantidade = Number(digitos);
-
-    return Number.isInteger(quantidade) ? quantidade : 0;
-}
-
-/**
  * Normaliza campos booleanos com valor padrao quando o payload nao enviar boolean.
  * Use para preservar defaults de formulario sem aceitar tipos ambiguos.
  */

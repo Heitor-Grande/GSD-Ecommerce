@@ -3,6 +3,7 @@ import { registrarAuditoria } from "@/utils/auditoria";
 import { consultarBancoDados } from "@/services/database";
 import { obterIdUsuarioAutenticado } from "@/utils/autenticacao";
 import { verificarEmpresaPertenceAoUsuario } from "@/utils/empresaUsuario";
+import { salvarImagemProduto } from "@/utils/imagens";
 import { normalizarIdEmpresa, normalizarImagemIlustrativa, normalizarQuantidadeEstoque, normalizarValorMonetario, obterBooleano } from "@/utils/normalizadores";
 import { verificarPermissaoAPI } from "@/utils/permissoes";
 import { criarRespostaApi } from "@/utils/respostaApi";
@@ -37,6 +38,10 @@ type CadastroProdutoBody = {
     imagemIlustrativa?: unknown;
 };
 
+type DadosProdutoNormalizados = CadastroProdutoBody & {
+    imagemIlustrativaArquivo: File | null;
+};
+
 const categoriasProduto = [
     "flores",
     "buques",
@@ -50,6 +55,35 @@ const categoriasProduto = [
 
 function normalizarCategoria(valor: unknown): string {
     return validarStringComConteudo(valor) ? valor.trim().toLowerCase() : "";
+}
+
+async function obterDadosProdutoRequest(request: NextRequest): Promise<DadosProdutoNormalizados> {
+    const contentType = request.headers.get("content-type") ?? "";
+
+    if (contentType.includes("multipart/form-data")) {
+        const formData = await request.formData();
+        const arquivo = formData.get("imagemIlustrativaArquivo");
+
+        return {
+            idEmpresa: formData.get("idEmpresa"),
+            nome: formData.get("nome"),
+            categoria: formData.get("categoria"),
+            valorPorUnidade: formData.get("valorPorUnidade"),
+            quantidadeEstoque: formData.get("quantidadeEstoque"),
+            ativo: formData.get("ativo") === "true",
+            valorPromocional: formData.get("valorPromocional") === "true",
+            freteGratis: formData.get("freteGratis") === "true",
+            imagemIlustrativa: formData.get("imagemIlustrativa"),
+            imagemIlustrativaArquivo: arquivo instanceof File ? arquivo : null,
+        };
+    }
+
+    const body = await request.json() as CadastroProdutoBody;
+
+    return {
+        ...body,
+        imagemIlustrativaArquivo: null,
+    };
 }
 
 /**
@@ -74,7 +108,7 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "Sessao invalida ou expirada.", null, 401);
         }
 
-        const body = await request.json() as CadastroProdutoBody;
+        const body = await obterDadosProdutoRequest(request);
         const idEmpresa = normalizarIdEmpresa(body.idEmpresa);
         const nome = validarStringComConteudo(body.nome) ? body.nome.trim() : "";
         const categoria = normalizarCategoria(body.categoria);
@@ -106,6 +140,10 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "Informe a quantidade em estoque do produto.", null, 400);
         }
 
+        if (!body.imagemIlustrativaArquivo) {
+            return criarRespostaApi(false, "Informe a imagem ilustrativa do produto.", null, 400);
+        }
+
         const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
             request: request,
             idEmpresa: idEmpresa,
@@ -115,7 +153,7 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "A empresa informada nao pertence ao usuario autenticado.", null, 403);
         }
 
-        const resultado = await consultarBancoDados<ProdutoCadastrado>(
+        const resultadoCadastro = await consultarBancoDados<ProdutoCadastrado>(
             `
                 insert into produtos (
                     id_empresa,
@@ -158,6 +196,34 @@ export async function POST(request: NextRequest) {
                 idUsuario,
             ]
         );
+        const produtoCadastrado = resultadoCadastro.rows[0];
+        const imagemProduto = await salvarImagemProduto({
+            idProduto: produtoCadastrado.id,
+            arquivo: body.imagemIlustrativaArquivo,
+        });
+        const resultado = await consultarBancoDados<ProdutoCadastrado>(
+            `
+                update produtos
+                set
+                    imagemilustrativa = $1::text
+                where id = $2::bigint
+                returning id,
+                    id_empresa,
+                    nome,
+                    categoria,
+                    valorporunidade,
+                    quantidadeestoque,
+                    ativo,
+                    valorpromocional,
+                    frete_gratis,
+                    imagemilustrativa,
+                    criacao_em,
+                    atualizado_em,
+                    criado_por,
+                    atualizado_por
+            `,
+            [imagemProduto, produtoCadastrado.id]
+        );
 
         await registrarAuditoria({
             acao: "CRIAR",
@@ -173,6 +239,10 @@ export async function POST(request: NextRequest) {
     } catch (erro) {
         if (erro instanceof SyntaxError) {
             return criarRespostaApi(false, "Requisicao invalida.", null, 400);
+        }
+
+        if (erro instanceof Error && erro.message === "EXTENSAO_IMAGEM_INVALIDA") {
+            return criarRespostaApi(false, "Informe uma imagem nos formatos jpg, png ou webp.", null, 400);
         }
 
         return criarRespostaApi(false, "Nao foi possivel cadastrar o produto.", null, 500);

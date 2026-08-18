@@ -20,6 +20,7 @@ export async function requisitarAPI(
     opcoes: OpcoesRequisicao = {}
 ): Promise<RespostaApi<unknown>> {
     const { method, body } = opcoes;
+    const usandoFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
     if (!method) {
         throw new Error("Informe o method da requisição.");
@@ -27,10 +28,10 @@ export async function requisitarAPI(
 
     const resposta = await fetch(rota, {
         method: method,
-        headers: {
+        headers: usandoFormData ? undefined : {
             "Content-Type": "application/json",
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: usandoFormData ? body : body ? JSON.stringify(body) : undefined,
     });
 
     const dados = await resposta.json() as RespostaApi<unknown>;
