@@ -8,6 +8,7 @@ import { obterIdUsuarioAutenticado } from "@/utils/autenticacao";
 import { verificarEmpresaPertenceAoUsuario } from "@/utils/empresaUsuario";
 import { verificarPermissaoAPI } from "@/utils/permissoes";
 import { criarRespostaApi } from "@/utils/respostaApi";
+import { verificarUsuarioAdministrador } from "@/utils/usuarioAdmin";
 
 type UsuarioListado = {
     id: number;
@@ -184,6 +185,8 @@ export async function GET(request: NextRequest) {
 
         const id = Number(request.nextUrl.searchParams.get("id"));
 
+        const isAdmin = await verificarUsuarioAdministrador(obterIdUsuarioAutenticado(request));
+
         if (Number.isInteger(id) && id > 0) {
             const resultadoUsuario = await consultarBancoDados<UsuarioDetalhado>(
                 `
@@ -233,14 +236,15 @@ export async function GET(request: NextRequest) {
                 from usuarios u
                 inner join usuarios_empresas ue on ue.usuario_id = u.id
                 left join perfil p on p.id = u.perfil_id
-                where ue.empresa_id = $1
+                where ue.empresa_id = $1 and u."isAdmin" = $2
                 order by u.criado_em desc
             `,
-            [empresaNavegacaoId]
+            [empresaNavegacaoId, isAdmin]
         );
 
         return criarRespostaApi(true, "Usuários listados com sucesso.", resultado.rows);
-    } catch {
+    } catch (erro) {
+        console.log(erro);
         return criarRespostaApi<UsuarioListado[]>(false, "Não foi possível listar os usuários.", [], 500);
     }
 }

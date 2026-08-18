@@ -15,6 +15,7 @@ export type RecursoPermissaoPerfil =
     | "usuario"
     | "empresa"
     | "vinculoUsuarioEmpresa"
+    | "catalogo"
     | "configuracao"
     | "perfil";
 
@@ -52,6 +53,7 @@ const recursosPermissao: Array<{ chave: RecursoPermissaoPerfil; titulo: string }
     { chave: "usuario", titulo: "Usuário" },
     { chave: "empresa", titulo: "Empresa" },
     { chave: "vinculoUsuarioEmpresa", titulo: "Vinculo Usuario - Empresa" },
+    { chave: "catalogo", titulo: "Catálogo" },
     { chave: "configuracao", titulo: "Configuração" },
     { chave: "perfil", titulo: "Perfil" },
 ];
@@ -83,6 +85,12 @@ const permissoesIniciais: Record<RecursoPermissaoPerfil, PermissaoPerfil> = {
         visualizar: false,
     },
     vinculoUsuarioEmpresa: {
+        criar: false,
+        deletar: false,
+        atualizar: false,
+        visualizar: false,
+    },
+    catalogo: {
         criar: false,
         deletar: false,
         atualizar: false,
@@ -120,6 +128,7 @@ function clonarPermissoes(permissoes: Record<RecursoPermissaoPerfil, PermissaoPe
         usuario: { ...permissoes.usuario },
         empresa: { ...permissoes.empresa },
         vinculoUsuarioEmpresa: { ...permissoes.vinculoUsuarioEmpresa },
+        catalogo: { ...permissoes.catalogo },
         configuracao: { ...permissoes.configuracao },
         perfil: { ...permissoes.perfil },
     };
@@ -144,6 +153,10 @@ function normalizarPermissoesPerfil(permissoes: Partial<Record<RecursoPermissaoP
         vinculoUsuarioEmpresa: {
             ...permissoesIniciais.vinculoUsuarioEmpresa,
             ...permissoes.vinculoUsuarioEmpresa,
+        },
+        catalogo: {
+            ...permissoesIniciais.catalogo,
+            ...permissoes.catalogo,
         },
         configuracao: {
             ...permissoesIniciais.configuracao,
