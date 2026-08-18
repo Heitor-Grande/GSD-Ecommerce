@@ -315,7 +315,7 @@ export default function ModalCadastroEmpresa({
                 </Modal.Header>
 
                 <form onSubmit={cadastrarEmpresa}>
-                    <Modal.Body>
+                    <Modal.Body className="max-h-[calc(100dvh-12rem)] overflow-y-auto">
                         <div className="mb-4 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
                             <button
                                 type="button"
@@ -535,7 +535,7 @@ export default function ModalCadastroEmpresa({
                             loading={false}
                             variant="outline-secondary"
                             type="button"
-                            className=""
+                            className="ocultar-mobile"
                         />
 
                         <Botao

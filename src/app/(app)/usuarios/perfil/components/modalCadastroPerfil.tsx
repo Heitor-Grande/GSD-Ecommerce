@@ -388,7 +388,7 @@ export default function ModalCadastroPerfil({
                 </Modal.Header>
 
                 <form onSubmit={salvarPerfil}>
-                    <Modal.Body>
+                    <Modal.Body className="max-h-[calc(100dvh-12rem)] overflow-y-auto">
                         <div className="grid gap-4 md:grid-cols-12">
                             <div className="md:col-span-6">
                                 <CampoTexto
@@ -501,7 +501,7 @@ export default function ModalCadastroPerfil({
                             loading={false}
                             variant="outline-secondary"
                             type="button"
-                            className=""
+                            className="ocultar-mobile"
                         />
 
                         <Botao

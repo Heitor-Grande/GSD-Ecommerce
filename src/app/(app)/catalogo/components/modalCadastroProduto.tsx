@@ -174,14 +174,15 @@ export default function ModalCadastroProduto({
                         </Modal.Title>
                     </Modal.Header>
 
-                    <Modal.Body>
+                    <Modal.Body className="max-h-[calc(100dvh-12rem)] overflow-y-auto">
                         <div className="grid gap-4 md:grid-cols-12">
                             <div className="md:col-span-12">
                                 <input
                                     id="produto-imagem-ilustrativa"
                                     className="sr-only"
                                     type="file"
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png"
+                                    required={!estaEditandoProduto}
                                     disabled={carregando}
                                     onChange={atualizarImagemIlustrativa}
                                 />
@@ -355,7 +356,7 @@ export default function ModalCadastroProduto({
                             loading={false}
                             variant="outline-secondary"
                             type="button"
-                            className=""
+                            className="ocultar-mobile"
                         />
 
                         <Botao

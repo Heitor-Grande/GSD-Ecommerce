@@ -104,6 +104,7 @@ Padrões desejados:
 - Não buscar dados diretamente dentro de modais genéricos.
 - Não executar regra de negócio específica dentro de modais genéricos.
 - Manter modais base reutilizáveis.
+- Em formulários dentro de modais que possuam rodapé com ações como `Cancelar`, `Excluir` e `Salvar`, o botão `Cancelar` deve usar `className="ocultar-mobile"` para ficar oculto no mobile. O fechamento/cancelamento em telas mobile deve permanecer disponível pelo botão `X` padrão no topo do modal. Não aplique essa regra aos botões de cancelamento dos modais de confirmação genéricos.
 
 Modais atuais:
 

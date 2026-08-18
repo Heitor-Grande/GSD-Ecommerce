@@ -184,3 +184,9 @@ textarea {
         min-height: calc(100% - 2rem);
     }
 }
+
+@media (max-width: 767.98px) {
+    .ocultar-mobile {
+        display: none !important;
+    }
+}

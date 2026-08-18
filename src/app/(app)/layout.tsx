@@ -12,9 +12,7 @@ export default function LayoutAreaAutenticada({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const [barraLateralAberta, setBarraLateralAberta] = useState(() => (
-        typeof window === "undefined" || window.matchMedia("(min-width: 1024px)").matches
-    ));
+    const [barraLateralAberta, setBarraLateralAberta] = useState(false);
 
     return (
         <div className="min-h-screen bg-[#f4f7fb]">
