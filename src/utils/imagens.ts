@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
 
 /**
@@ -46,6 +46,27 @@ export async function salvarImagemProduto({
 }
 
 /**
+ * Remove uma imagem de produto salva em src/images.
+ * Ignora arquivo inexistente para permitir substituicao segura durante atualizacoes.
+ */
+export async function apagarImagemProduto(caminhoImagem: string | null): Promise<void> {
+    if (!caminhoImagem) {
+        return;
+    }
+
+    const nomeArquivo = path.basename(caminhoImagem);
+    const caminhoArquivo = path.join(process.cwd(), "src", "images", nomeArquivo);
+
+    try {
+        await unlink(caminhoArquivo);
+    } catch (erro) {
+        if (!(erro instanceof Error) || !("code" in erro) || erro.code !== "ENOENT") {
+            throw erro;
+        }
+    }
+}
+
+/**
  * Le uma imagem de produto salva em src/images pelo nome do arquivo.
  * Use em rotas server-side que precisam servir imagens armazenadas localmente.
  */
@@ -58,14 +79,16 @@ export async function lerImagemProduto(nomeArquivo: string): Promise<Buffer> {
 
 /**
  * Monta a URL publica da API que serve uma imagem local do produto.
+ * Use versao para invalidar cache do navegador quando a imagem for atualizada.
  * Retorna null quando nao houver caminho de imagem gravado.
  */
-export function montarUrlImagemProduto(caminhoImagem: string | null): string | null {
+export function montarUrlImagemProduto(caminhoImagem: string | null, versao?: string | Date | null): string | null {
     if (!caminhoImagem) {
         return null;
     }
 
     const nomeArquivo = path.basename(caminhoImagem);
+    const parametroVersao = versao ? `?v=${encodeURIComponent(String(versao))}` : "";
 
-    return `/api/catalogo/imagem/${encodeURIComponent(nomeArquivo)}`;
+    return `/api/catalogo/imagem/${encodeURIComponent(nomeArquivo)}${parametroVersao}`;
 }

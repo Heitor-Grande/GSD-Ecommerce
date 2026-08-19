@@ -64,7 +64,7 @@ export default function PaginaCatalogo() {
         return produtos.slice(inicio, inicio + QUANTIDADE_PRODUTOS_POR_PAGINA);
     }, [paginaAtualLimitada, produtos]);
 
-    const carregarProdutosCadastrados = useCallback(async () => {
+    const carregarProdutosCadastrados = useCallback(async (reiniciarPagina = true) => {
         try {
             setCarregando(true);
             setMensagemResposta("");
@@ -88,7 +88,10 @@ export default function PaginaCatalogo() {
             }
 
             setProdutos(resposta.dados ?? []);
-            setPaginaAtual(1);
+
+            if (reiniciarPagina) {
+                setPaginaAtual(1);
+            }
         } catch {
             setProdutos([]);
             setMensagemResposta("Nao foi possivel carregar os produtos.");
@@ -272,10 +275,6 @@ export default function PaginaCatalogo() {
                             className="w-full sm:w-auto"
                         />
 
-                        <span className="text-center text-sm font-semibold text-slate-500">
-                            Mostrando {produtosPaginados.length} de {produtos.length} produto(s)
-                        </span>
-
                         <Botao
                             size="sm"
                             label="Proxima"
@@ -298,7 +297,7 @@ export default function PaginaCatalogo() {
                     aoFechar={() => {
                         setModalCadastroAberto(false);
                         setIdProdutoSelecionado(null);
-                        void carregarProdutosCadastrados();
+                        void carregarProdutosCadastrados(false);
                     }}
                 />
             )}

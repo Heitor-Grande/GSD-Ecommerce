@@ -3,7 +3,7 @@ import { registrarAuditoria } from "@/utils/auditoria";
 import { consultarBancoDados } from "@/services/database";
 import { obterIdUsuarioAutenticado } from "@/utils/autenticacao";
 import { verificarEmpresaPertenceAoUsuario } from "@/utils/empresaUsuario";
-import { montarUrlImagemProduto, salvarImagemProduto } from "@/utils/imagens";
+import { apagarImagemProduto, montarUrlImagemProduto, salvarImagemProduto } from "@/utils/imagens";
 import { normalizarImagemIlustrativa, normalizarQuantidadeEstoque, normalizarValorMonetario, obterBooleano } from "@/utils/normalizadores";
 import { verificarPermissaoAPI } from "@/utils/permissoes";
 import { criarRespostaApi } from "@/utils/respostaApi";
@@ -92,7 +92,7 @@ async function obterDadosProdutoRequest(request: NextRequest): Promise<DadosProd
 function montarProdutoCatalogo(produto: Omit<ProdutoCatalogo, "imagem_url">): ProdutoCatalogo {
     return {
         ...produto,
-        imagem_url: montarUrlImagemProduto(produto.imagemilustrativa),
+        imagem_url: montarUrlImagemProduto(produto.imagemilustrativa, produto.atualizado_em),
     };
 }
 
@@ -243,12 +243,16 @@ export async function PUT(
             return criarRespostaApi(false, "Informe a quantidade em estoque do produto.", null, 400);
         }
 
-        const imagemProduto = body.imagemIlustrativaArquivo
-            ? await salvarImagemProduto({
+        let imagemProduto = imagemIlustrativa ?? produtoAtual.imagemilustrativa;
+
+        if (body.imagemIlustrativaArquivo) {
+            await apagarImagemProduto(produtoAtual.imagemilustrativa);
+            imagemProduto = await salvarImagemProduto({
                 idProduto: idProduto,
                 arquivo: body.imagemIlustrativaArquivo,
-            })
-            : imagemIlustrativa ?? produtoAtual.imagemilustrativa;
+            });
+        }
+
         const resultado = await consultarBancoDados<Omit<ProdutoCatalogo, "imagem_url">>(
             `
                 update produtos
@@ -315,5 +319,92 @@ export async function PUT(
         }
 
         return criarRespostaApi(false, "Nao foi possivel atualizar o produto.", null, 500);
+    }
+}
+
+/**
+ * Endpoint DELETE de produto do catalogo.
+ * Exclui o produto informado e remove sua imagem salva em src/images.
+ */
+export async function DELETE(
+    request: NextRequest,
+    contexto: { params: Promise<{ idproduto: string }> }
+) {
+    try {
+        const respostaPermissao = await verificarPermissaoAPI({
+            request: request,
+            recurso: "catalogo",
+            acao: "deletar",
+        });
+
+        if (respostaPermissao) {
+            return respostaPermissao;
+        }
+
+        const idUsuario = obterIdUsuarioAutenticado(request);
+
+        if (!idUsuario) {
+            return criarRespostaApi(false, "Sessao invalida ou expirada.", null, 401);
+        }
+
+        const idProduto = normalizarIdProduto((await contexto.params).idproduto);
+
+        if (!Number.isInteger(idProduto) || idProduto <= 0) {
+            return criarRespostaApi(false, "Informe um produto valido.", null, 400);
+        }
+
+        const produtoAtual = await buscarProdutoPorId(idProduto);
+
+        if (!produtoAtual) {
+            return criarRespostaApi(false, "Produto nao encontrado.", null, 404);
+        }
+
+        const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
+            request: request,
+            idEmpresa: produtoAtual.id_empresa,
+        });
+
+        if (!empresaPertenceAoUsuario) {
+            return criarRespostaApi(false, "A empresa do produto nao pertence ao usuario autenticado.", null, 403);
+        }
+
+        const resultado = await consultarBancoDados<Omit<ProdutoCatalogo, "imagem_url">>(
+            `
+                delete from produtos
+                where id = $1
+                returning id,
+                    id_empresa,
+                    nome,
+                    categoria,
+                    valorporunidade,
+                    quantidadeestoque,
+                    ativo,
+                    valorpromocional,
+                    frete_gratis,
+                    imagemilustrativa,
+                    criacao_em,
+                    atualizado_em,
+                    criado_por,
+                    atualizado_por
+            `,
+            [idProduto]
+        );
+        const produtoExcluido = resultado.rows[0];
+
+        await apagarImagemProduto(produtoExcluido.imagemilustrativa);
+
+        await registrarAuditoria({
+            acao: "EXCLUIR",
+            usuarioId: idUsuario,
+            empresaId: produtoAtual.id_empresa,
+            dadosAntes: produtoAtual,
+            dadosDepois: null,
+            metodoHttp: "DELETE",
+            rota: request.nextUrl.pathname,
+        });
+
+        return criarRespostaApi(true, "Produto excluido com sucesso.", montarProdutoCatalogo(produtoExcluido));
+    } catch {
+        return criarRespostaApi(false, "Nao foi possivel excluir o produto.", null, 500);
     }
 }

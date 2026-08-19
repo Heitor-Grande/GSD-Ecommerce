@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         );
         const produtos: ProdutoListado[] = resultado.rows.map((produto) => ({
             ...produto,
-            imagem_url: montarUrlImagemProduto(produto.imagemilustrativa),
+            imagem_url: montarUrlImagemProduto(produto.imagemilustrativa, produto.atualizado_em),
         }));
 
         return criarRespostaApi(true, "Produtos listados com sucesso.", produtos);

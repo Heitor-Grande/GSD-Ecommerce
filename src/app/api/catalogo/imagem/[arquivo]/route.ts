@@ -32,7 +32,7 @@ export async function GET(
         return new Response(new Uint8Array(imagem), {
             headers: {
                 "Content-Type": contentType,
-                "Cache-Control": "public, max-age=31536000, immutable",
+                "Cache-Control": "no-store",
             },
         });
     } catch {

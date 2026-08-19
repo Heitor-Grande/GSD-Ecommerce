@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Botao } from "@/components/inputs/button";
 import { CampoTexto } from "@/components/inputs/input";
@@ -94,8 +94,8 @@ function obterNomeArquivoImagem(caminhoImagem: string | null): string {
 }
 
 /**
- * Modal local de cadastro e edição de produto.
- * Use no fluxo de catálogo para cadastrar, atualizar e excluir produtos do ecommerce.
+ * Modal local de cadastro e ediÃ§Ã£o de produto.
+ * Use no fluxo de catÃ¡logo para cadastrar, atualizar e excluir produtos do ecommerce.
  */
 export default function ModalCadastroProduto({
     aberto,
@@ -285,12 +285,35 @@ export default function ModalCadastroProduto({
 
         return;
 
-        setMensagemResposta("Os campos do produto ainda serão definidos.");
+        setMensagemResposta("Os campos do produto ainda serÃ£o definidos.");
     }
 
-    function deletarProduto() {
+    async function deletarProduto() {
         setModalConfirmacaoExclusaoAberto(false);
-        setMensagemResposta("A exclusão do produto ainda será implementada.");
+
+        if (!idProduto) {
+            setMensagemResposta("Informe um produto valido para excluir.");
+            return;
+        }
+
+        setCarregando(true);
+        setMensagemResposta("");
+
+        try {
+            await requisitarAPI(`/api/catalogo/produto/${idProduto}`, {
+                method: "DELETE",
+            });
+
+            fecharModalCadastroProduto();
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error
+                ? erro.message
+                : "Nao foi possivel excluir o produto.";
+
+            setMensagemResposta(mensagemErro);
+        } finally {
+            setCarregando(false);
+        }
     }
 
     return (
@@ -346,7 +369,7 @@ export default function ModalCadastroProduto({
                                             {formulario.nomeImagemIlustrativa || "Imagem ilustrativa do produto"}
                                         </span>
                                         <span className="mt-1 block text-sm text-slate-500">
-                                            Use uma imagem clara do produto para exibição no catálogo.
+                                            Use uma imagem clara do produto para exibiÃ§Ã£o no catÃ¡logo.
                                         </span>
                                     </span>
                                 </label>
@@ -462,7 +485,7 @@ export default function ModalCadastroProduto({
                         </div>
 
                         <div className="hidden">
-                            Campos do produto serão definidos nas próximas etapas.
+                            Campos do produto serÃ£o definidos nas prÃ³ximas etapas.
                         </div>
                     </Modal.Body>
 
