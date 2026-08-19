@@ -4,12 +4,12 @@ import { consultarBancoDados } from "@/services/database";
 import { obterIdUsuarioAutenticado } from "@/utils/autenticacao";
 import { verificarEmpresaPertenceAoUsuario } from "@/utils/empresaUsuario";
 import { montarUrlImagemProduto, salvarImagemProduto } from "@/utils/imagens";
-import { normalizarIdEmpresa, normalizarImagemIlustrativa, normalizarQuantidadeEstoque, normalizarValorMonetario, obterBooleano } from "@/utils/normalizadores";
+import { normalizarImagemIlustrativa, normalizarQuantidadeEstoque, normalizarValorMonetario, obterBooleano } from "@/utils/normalizadores";
 import { verificarPermissaoAPI } from "@/utils/permissoes";
 import { criarRespostaApi } from "@/utils/respostaApi";
 import { validarStringComConteudo } from "@/utils/validacoes";
 
-type ProdutoCadastrado = {
+type ProdutoCatalogo = {
     id: number;
     id_empresa: number;
     nome: string;
@@ -20,18 +20,14 @@ type ProdutoCadastrado = {
     valorpromocional: boolean;
     frete_gratis: boolean;
     imagemilustrativa: string | null;
+    imagem_url: string | null;
     criacao_em: Date;
     atualizado_em: Date;
     criado_por: number;
     atualizado_por: number | null;
 };
 
-type ProdutoListado = ProdutoCadastrado & {
-    imagem_url: string | null;
-};
-
 type CadastroProdutoBody = {
-    idEmpresa?: unknown;
     nome?: unknown;
     categoria?: unknown;
     valorPorUnidade?: unknown;
@@ -57,6 +53,10 @@ const categoriasProduto = [
     "acessorios",
 ] as const;
 
+function normalizarIdProduto(valor: unknown): number {
+    return typeof valor === "number" ? valor : Number(valor);
+}
+
 function normalizarCategoria(valor: unknown): string {
     return validarStringComConteudo(valor) ? valor.trim().toLowerCase() : "";
 }
@@ -69,7 +69,6 @@ async function obterDadosProdutoRequest(request: NextRequest): Promise<DadosProd
         const arquivo = formData.get("imagemIlustrativaArquivo");
 
         return {
-            idEmpresa: formData.get("idEmpresa"),
             nome: formData.get("nome"),
             categoria: formData.get("categoria"),
             valorPorUnidade: formData.get("valorPorUnidade"),
@@ -78,7 +77,7 @@ async function obterDadosProdutoRequest(request: NextRequest): Promise<DadosProd
             valorPromocional: formData.get("valorPromocional") === "true",
             freteGratis: formData.get("freteGratis") === "true",
             imagemIlustrativa: formData.get("imagemIlustrativa"),
-            imagemIlustrativaArquivo: arquivo instanceof File ? arquivo : null,
+            imagemIlustrativaArquivo: arquivo instanceof File && arquivo.size > 0 ? arquivo : null,
         };
     }
 
@@ -90,11 +89,49 @@ async function obterDadosProdutoRequest(request: NextRequest): Promise<DadosProd
     };
 }
 
+function montarProdutoCatalogo(produto: Omit<ProdutoCatalogo, "imagem_url">): ProdutoCatalogo {
+    return {
+        ...produto,
+        imagem_url: montarUrlImagemProduto(produto.imagemilustrativa),
+    };
+}
+
+async function buscarProdutoPorId(idProduto: number) {
+    const resultado = await consultarBancoDados<Omit<ProdutoCatalogo, "imagem_url">>(
+        `
+            select
+                id,
+                id_empresa,
+                nome,
+                categoria,
+                valorporunidade,
+                quantidadeestoque,
+                ativo,
+                valorpromocional,
+                frete_gratis,
+                imagemilustrativa,
+                criacao_em,
+                atualizado_em,
+                criado_por,
+                atualizado_por
+            from produtos
+            where id = $1
+            limit 1
+        `,
+        [idProduto]
+    );
+
+    return resultado.rows[0] ?? null;
+}
+
 /**
- * Endpoint GET de produtos do catalogo.
- * Lista produtos vinculados a empresa de navegacao do usuario autenticado.
+ * Endpoint GET de produto do catalogo.
+ * Carrega um produto individual para preenchimento do formulario de edicao.
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+    request: NextRequest,
+    contexto: { params: Promise<{ idproduto: string }> }
+) {
     try {
         const respostaPermissao = await verificarPermissaoAPI({
             request: request,
@@ -106,72 +143,46 @@ export async function GET(request: NextRequest) {
             return respostaPermissao;
         }
 
-        const idUsuario = obterIdUsuarioAutenticado(request);
+        const idProduto = normalizarIdProduto((await contexto.params).idproduto);
 
-        if (!idUsuario) {
-            return criarRespostaApi(false, "Sessao invalida ou expirada.", null, 401);
+        if (!Number.isInteger(idProduto) || idProduto <= 0) {
+            return criarRespostaApi(false, "Informe um produto valido.", null, 400);
         }
 
-        const idEmpresa = normalizarIdEmpresa(request.nextUrl.searchParams.get("idEmpresa"));
+        const produto = await buscarProdutoPorId(idProduto);
 
-        if (!Number.isInteger(idEmpresa) || idEmpresa <= 0) {
-            return criarRespostaApi(false, "Informe uma empresa valida para listar os produtos.", null, 400);
+        if (!produto) {
+            return criarRespostaApi(false, "Produto nao encontrado.", null, 404);
         }
 
         const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
             request: request,
-            idEmpresa: idEmpresa,
+            idEmpresa: produto.id_empresa,
         });
 
         if (!empresaPertenceAoUsuario) {
-            return criarRespostaApi(false, "A empresa informada nao pertence ao usuario autenticado.", null, 403);
+            return criarRespostaApi(false, "A empresa do produto nao pertence ao usuario autenticado.", null, 403);
         }
 
-        const resultado = await consultarBancoDados<ProdutoCadastrado>(
-            `
-                select
-                    id,
-                    id_empresa,
-                    nome,
-                    categoria,
-                    valorporunidade,
-                    quantidadeestoque,
-                    ativo,
-                    valorpromocional,
-                    frete_gratis,
-                    imagemilustrativa,
-                    criacao_em,
-                    atualizado_em,
-                    criado_por,
-                    atualizado_por
-                from produtos
-                where id_empresa = $1
-                order by valorpromocional desc,
-                    criacao_em desc
-            `,
-            [idEmpresa]
-        );
-        const produtos: ProdutoListado[] = resultado.rows.map((produto) => ({
-            ...produto,
-            imagem_url: montarUrlImagemProduto(produto.imagemilustrativa),
-        }));
-
-        return criarRespostaApi(true, "Produtos listados com sucesso.", produtos);
+        return criarRespostaApi(true, "Produto carregado com sucesso.", montarProdutoCatalogo(produto));
     } catch {
-        return criarRespostaApi<ProdutoListado[]>(false, "Nao foi possivel listar os produtos.", [], 500);
+        return criarRespostaApi(false, "Nao foi possivel carregar o produto.", null, 500);
     }
 }
 
 /**
- * Endpoint POST de produtos do catalogo.
- * Valida os dados obrigatorios e cadastra o produto vinculado a uma empresa do usuario autenticado.
+ * Endpoint PUT de produto do catalogo.
+ * Atualiza os dados do produto informado e opcionalmente substitui sua imagem.
  */
-export async function POST(request: NextRequest) {
+export async function PUT(
+    request: NextRequest,
+    contexto: { params: Promise<{ idproduto: string }> }
+) {
     try {
         const respostaPermissao = await verificarPermissaoAPI({
             request: request,
             recurso: "catalogo",
-            acao: "criar",
+            acao: "atualizar",
         });
 
         if (respostaPermissao) {
@@ -184,8 +195,28 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "Sessao invalida ou expirada.", null, 401);
         }
 
+        const idProduto = normalizarIdProduto((await contexto.params).idproduto);
+
+        if (!Number.isInteger(idProduto) || idProduto <= 0) {
+            return criarRespostaApi(false, "Informe um produto valido.", null, 400);
+        }
+
+        const produtoAtual = await buscarProdutoPorId(idProduto);
+
+        if (!produtoAtual) {
+            return criarRespostaApi(false, "Produto nao encontrado.", null, 404);
+        }
+
+        const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
+            request: request,
+            idEmpresa: produtoAtual.id_empresa,
+        });
+
+        if (!empresaPertenceAoUsuario) {
+            return criarRespostaApi(false, "A empresa do produto nao pertence ao usuario autenticado.", null, 403);
+        }
+
         const body = await obterDadosProdutoRequest(request);
-        const idEmpresa = normalizarIdEmpresa(body.idEmpresa);
         const nome = validarStringComConteudo(body.nome) ? body.nome.trim() : "";
         const categoria = normalizarCategoria(body.categoria);
         const valorPorUnidade = normalizarValorMonetario(body.valorPorUnidade);
@@ -195,10 +226,6 @@ export async function POST(request: NextRequest) {
         const imagemIlustrativa = normalizarImagemIlustrativa(body.imagemIlustrativa);
         const ativoInformado = obterBooleano(body.ativo, true);
         const ativo = quantidadeEstoque === 0 ? false : ativoInformado;
-
-        if (!Number.isInteger(idEmpresa) || idEmpresa <= 0) {
-            return criarRespostaApi(false, "Informe uma empresa valida para o produto.", null, 400);
-        }
 
         if (!nome || nome.length > 40) {
             return criarRespostaApi(false, "Informe o nome do produto com ate 40 caracteres.", null, 400);
@@ -216,34 +243,27 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "Informe a quantidade em estoque do produto.", null, 400);
         }
 
-        if (!body.imagemIlustrativaArquivo) {
-            return criarRespostaApi(false, "Informe a imagem ilustrativa do produto.", null, 400);
-        }
-
-        const empresaPertenceAoUsuario = await verificarEmpresaPertenceAoUsuario({
-            request: request,
-            idEmpresa: idEmpresa,
-        });
-
-        if (!empresaPertenceAoUsuario) {
-            return criarRespostaApi(false, "A empresa informada nao pertence ao usuario autenticado.", null, 403);
-        }
-
-        const resultadoCadastro = await consultarBancoDados<ProdutoCadastrado>(
+        const imagemProduto = body.imagemIlustrativaArquivo
+            ? await salvarImagemProduto({
+                idProduto: idProduto,
+                arquivo: body.imagemIlustrativaArquivo,
+            })
+            : imagemIlustrativa ?? produtoAtual.imagemilustrativa;
+        const resultado = await consultarBancoDados<Omit<ProdutoCatalogo, "imagem_url">>(
             `
-                insert into produtos (
-                    id_empresa,
-                    nome,
-                    categoria,
-                    valorporunidade,
-                    quantidadeestoque,
-                    ativo,
-                    valorpromocional,
-                    frete_gratis,
-                    imagemilustrativa,
-                    criado_por
-                )
-                values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                update produtos
+                set
+                    nome = $1,
+                    categoria = $2,
+                    valorporunidade = $3,
+                    quantidadeestoque = $4,
+                    ativo = $5,
+                    valorpromocional = $6,
+                    frete_gratis = $7,
+                    imagemilustrativa = $8::text,
+                    atualizado_em = now(),
+                    atualizado_por = $9
+                where id = $10
                 returning id,
                     id_empresa,
                     nome,
@@ -260,7 +280,6 @@ export async function POST(request: NextRequest) {
                     atualizado_por
             `,
             [
-                idEmpresa,
                 nome,
                 categoria,
                 valorPorUnidade,
@@ -268,50 +287,24 @@ export async function POST(request: NextRequest) {
                 ativo,
                 valorPromocional,
                 freteGratis,
-                imagemIlustrativa,
+                imagemProduto,
                 idUsuario,
+                idProduto,
             ]
         );
-        const produtoCadastrado = resultadoCadastro.rows[0];
-        const imagemProduto = await salvarImagemProduto({
-            idProduto: produtoCadastrado.id,
-            arquivo: body.imagemIlustrativaArquivo,
-        });
-        const resultado = await consultarBancoDados<ProdutoCadastrado>(
-            `
-                update produtos
-                set
-                    imagemilustrativa = $1::text
-                where id = $2::bigint
-                returning id,
-                    id_empresa,
-                    nome,
-                    categoria,
-                    valorporunidade,
-                    quantidadeestoque,
-                    ativo,
-                    valorpromocional,
-                    frete_gratis,
-                    imagemilustrativa,
-                    criacao_em,
-                    atualizado_em,
-                    criado_por,
-                    atualizado_por
-            `,
-            [imagemProduto, produtoCadastrado.id]
-        );
+        const produtoAtualizado = montarProdutoCatalogo(resultado.rows[0]);
 
         await registrarAuditoria({
-            acao: "CRIAR",
+            acao: "ATUALIZAR",
             usuarioId: idUsuario,
-            empresaId: idEmpresa,
-            dadosAntes: null,
-            dadosDepois: resultado.rows[0],
-            metodoHttp: "POST",
+            empresaId: produtoAtual.id_empresa,
+            dadosAntes: produtoAtual,
+            dadosDepois: produtoAtualizado,
+            metodoHttp: "PUT",
             rota: request.nextUrl.pathname,
         });
 
-        return criarRespostaApi(true, "Produto cadastrado com sucesso.", resultado.rows[0], 201);
+        return criarRespostaApi(true, "Produto atualizado com sucesso.", produtoAtualizado);
     } catch (erro) {
         if (erro instanceof SyntaxError) {
             return criarRespostaApi(false, "Requisicao invalida.", null, 400);
@@ -321,6 +314,6 @@ export async function POST(request: NextRequest) {
             return criarRespostaApi(false, "Informe uma imagem nos formatos jpg, png ou webp.", null, 400);
         }
 
-        return criarRespostaApi(false, "Nao foi possivel cadastrar o produto.", null, 500);
+        return criarRespostaApi(false, "Nao foi possivel atualizar o produto.", null, 500);
     }
 }

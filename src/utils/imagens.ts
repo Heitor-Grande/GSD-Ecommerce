@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 /**
@@ -43,4 +43,29 @@ export async function salvarImagemProduto({
     await writeFile(caminhoArquivo, Buffer.from(await arquivo.arrayBuffer()));
 
     return `src/images/${nomeArquivo}`;
+}
+
+/**
+ * Le uma imagem de produto salva em src/images pelo nome do arquivo.
+ * Use em rotas server-side que precisam servir imagens armazenadas localmente.
+ */
+export async function lerImagemProduto(nomeArquivo: string): Promise<Buffer> {
+    const nomeSeguro = path.basename(nomeArquivo);
+    const caminhoArquivo = path.join(process.cwd(), "src", "images", nomeSeguro);
+
+    return readFile(caminhoArquivo);
+}
+
+/**
+ * Monta a URL publica da API que serve uma imagem local do produto.
+ * Retorna null quando nao houver caminho de imagem gravado.
+ */
+export function montarUrlImagemProduto(caminhoImagem: string | null): string | null {
+    if (!caminhoImagem) {
+        return null;
+    }
+
+    const nomeArquivo = path.basename(caminhoImagem);
+
+    return `/api/catalogo/imagem/${encodeURIComponent(nomeArquivo)}`;
 }

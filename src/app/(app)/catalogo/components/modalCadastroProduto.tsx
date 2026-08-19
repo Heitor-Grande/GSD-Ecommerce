@@ -6,7 +6,7 @@ import { Seletor } from "@/components/inputs/select";
 import ModalConfirmacao from "@/components/modals/confirmModal";
 import { ModalCarregamento } from "@/components/modals/loading";
 import ModalResposta from "@/components/modals/responseModal";
-import { requisitarAPI } from "@/utils/api";
+import { requisitarAPI, type RespostaApi } from "@/utils/api";
 import { aplicarMascaraMoedaRealPorCentavos, aplicarMascaraNumeroInteiro, converterMoedaRealFormatadaParaNumero } from "@/utils/mascaras";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
@@ -27,7 +27,21 @@ type DadosCadastroProduto = {
     freteGratis: boolean;
     quantidadeEstoque: string;
     imagemIlustrativa: File | null;
+    caminhoImagemIlustrativa: string;
     nomeImagemIlustrativa: string;
+};
+
+type ProdutoCarregado = {
+    id: number;
+    nome: string;
+    categoria: string;
+    valorporunidade: number | string;
+    quantidadeestoque: number;
+    ativo: boolean;
+    valorpromocional: boolean;
+    frete_gratis: boolean;
+    imagemilustrativa: string | null;
+    imagem_url: string | null;
 };
 
 type OpcaoCategoria = {
@@ -55,10 +69,29 @@ const estadoInicialFormulario: DadosCadastroProduto = {
     freteGratis: false,
     quantidadeEstoque: "",
     imagemIlustrativa: null,
+    caminhoImagemIlustrativa: "",
     nomeImagemIlustrativa: "",
 };
 
 const CHAVE_EMPRESA_NAVEGACAO = "empresaNavegacaoId";
+
+function formatarValorMonetarioFormulario(valor: number | string): string {
+    const numero = Number(valor);
+
+    if (!Number.isFinite(numero)) {
+        return "";
+    }
+
+    return aplicarMascaraMoedaRealPorCentavos(String(Math.round(numero * 100)));
+}
+
+function obterNomeArquivoImagem(caminhoImagem: string | null): string {
+    if (!caminhoImagem) {
+        return "";
+    }
+
+    return caminhoImagem.split(/[\\/]/).pop() ?? "";
+}
 
 /**
  * Modal local de cadastro e edição de produto.
@@ -76,8 +109,46 @@ export default function ModalCadastroProduto({
     const [modalConfirmacaoExclusaoAberto, setModalConfirmacaoExclusaoAberto] = useState(false);
 
     const estaEditandoProduto = typeof idProduto === "number" && idProduto > 0;
-    const textoCarregamento = estaEditandoProduto ? "Atualizando produto..." : "Salvando produto...";
+    const textoCarregamento = "Carregando...";
     const produtoSemEstoque = formulario.quantidadeEstoque !== "" && Number(formulario.quantidadeEstoque) === 0;
+
+    async function carregarInformacoesProduto(idProdutoParaCarregar: number) {
+        setCarregando(true);
+        setMensagemResposta("");
+
+        try {
+            const resposta = await requisitarAPI(`/api/catalogo/produto/${idProdutoParaCarregar}`, {
+                method: "GET",
+            }) as RespostaApi<ProdutoCarregado>;
+
+            if (!resposta.sucesso || !resposta.dados) {
+                setMensagemResposta(resposta.msg || "Nao foi possivel carregar o produto.");
+                return;
+            }
+
+            setFormulario({
+                nome: resposta.dados.nome ?? "",
+                categoria: opcoesCategoria.find((opcao) => opcao.value === resposta.dados?.categoria) ?? null,
+                valorPorUnidade: formatarValorMonetarioFormulario(resposta.dados.valorporunidade),
+                ativo: Boolean(resposta.dados.ativo),
+                valorPromocional: Boolean(resposta.dados.valorpromocional),
+                freteGratis: Boolean(resposta.dados.frete_gratis),
+                quantidadeEstoque: String(resposta.dados.quantidadeestoque ?? ""),
+                imagemIlustrativa: null,
+                caminhoImagemIlustrativa: resposta.dados.imagemilustrativa ?? "",
+                nomeImagemIlustrativa: obterNomeArquivoImagem(resposta.dados.imagemilustrativa),
+            });
+            setImagemPreviewUrl(resposta.dados.imagem_url ?? "");
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error
+                ? erro.message
+                : "Nao foi possivel carregar o produto.";
+
+            setMensagemResposta(mensagemErro);
+        } finally {
+            setCarregando(false);
+        }
+    }
 
     function atualizarCampoFormulario(campo: keyof DadosCadastroProduto, valor: string | boolean) {
         setFormulario((estadoAtual) => {
@@ -107,22 +178,33 @@ export default function ModalCadastroProduto({
 
     useEffect(() => {
         return () => {
-            if (imagemPreviewUrl) {
+            if (imagemPreviewUrl.startsWith("blob:")) {
                 URL.revokeObjectURL(imagemPreviewUrl);
             }
         };
     }, [imagemPreviewUrl]);
 
+    useEffect(() => {
+        if (idProduto) {
+            const timeout = window.setTimeout(() => {
+                void carregarInformacoesProduto(idProduto);
+            }, 0);
+
+            return () => window.clearTimeout(timeout);
+        }
+    }, [idProduto]);
+
     function atualizarImagemIlustrativa(event: ChangeEvent<HTMLInputElement>) {
         const arquivo = event.target.files?.[0] ?? null;
 
-        if (imagemPreviewUrl) {
+        if (imagemPreviewUrl.startsWith("blob:")) {
             URL.revokeObjectURL(imagemPreviewUrl);
         }
 
         setFormulario((estadoAtual) => ({
             ...estadoAtual,
             imagemIlustrativa: arquivo,
+            caminhoImagemIlustrativa: arquivo ? "" : estadoAtual.caminhoImagemIlustrativa,
             nomeImagemIlustrativa: arquivo?.name ?? "",
         }));
         setImagemPreviewUrl(arquivo ? URL.createObjectURL(arquivo) : "");
@@ -162,7 +244,7 @@ export default function ModalCadastroProduto({
             return;
         }
 
-        if (!formulario.imagemIlustrativa) {
+        if (!estaEditandoProduto && !formulario.imagemIlustrativa) {
             setMensagemResposta("Informe a imagem ilustrativa do produto.");
             return;
         }
@@ -176,13 +258,17 @@ export default function ModalCadastroProduto({
         dadosProduto.append("ativo", String(formulario.ativo));
         dadosProduto.append("valorPromocional", String(formulario.valorPromocional));
         dadosProduto.append("freteGratis", String(formulario.freteGratis));
-        dadosProduto.append("imagemIlustrativaArquivo", formulario.imagemIlustrativa);
+        dadosProduto.append("imagemIlustrativa", formulario.caminhoImagemIlustrativa);
+
+        if (formulario.imagemIlustrativa) {
+            dadosProduto.append("imagemIlustrativaArquivo", formulario.imagemIlustrativa);
+        }
 
         setCarregando(true);
 
         try {
-            await requisitarAPI("/api/catalogo", {
-                method: "POST",
+            await requisitarAPI(estaEditandoProduto ? `/api/catalogo/produto/${idProduto}` : "/api/catalogo", {
+                method: estaEditandoProduto ? "PUT" : "POST",
                 body: dadosProduto,
             });
 
