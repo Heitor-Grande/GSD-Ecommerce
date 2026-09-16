@@ -3,6 +3,7 @@
 import { Botao } from "@/components/inputs/button";
 import ModalResposta from "@/components/modals/responseModal";
 import { requisitarAPI, type RespostaApi } from "@/utils/api";
+import { formatarCategoria, formatarNumeroInteiroParaExibicao, formatarValorComoMoedaReal } from "@/utils/mascaras";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FaBoxOpen, FaChevronLeft, FaChevronRight, FaImage, FaPlus, FaTags } from "react-icons/fa";
 import ModalCadastroProduto from "./components/modalCadastroProduto";
@@ -21,27 +22,6 @@ type ProdutoCatalogo = {
     frete_gratis: boolean;
     imagem_url: string | null;
 };
-
-function formatarMoeda(valor: number | string): string {
-    const numero = Number(valor);
-
-    if (!Number.isFinite(numero)) {
-        return "R$ 0,00";
-    }
-
-    return numero.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-    });
-}
-
-function formatarCategoria(categoria: string): string {
-    if (!categoria) {
-        return "Sem categoria";
-    }
-
-    return categoria.charAt(0).toUpperCase() + categoria.slice(1);
-}
 
 /**
  * Pagina de catalogo administrativo.
@@ -240,14 +220,14 @@ export default function PaginaCatalogo() {
                                                 produto.valorpromocional ? "text-amber-600" : "text-blue-700"
                                             }`}
                                         >
-                                            {formatarMoeda(produto.valorporunidade)}
+                                            {formatarValorComoMoedaReal(produto.valorporunidade)}
                                         </span>
                                         <span className="ml-1 text-xs font-semibold text-slate-500">/ un.</span>
                                     </div>
 
                                     <div className="flex flex-wrap gap-2">
                                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                                            Estoque: {produto.quantidadeestoque}
+                                            Estoque: {formatarNumeroInteiroParaExibicao(produto.quantidadeestoque)}
                                         </span>
                                         {produto.frete_gratis && (
                                             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">

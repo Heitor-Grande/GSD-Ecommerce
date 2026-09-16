@@ -63,16 +63,16 @@ export default function PaginaInicial() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/gramas"
+                href="/produtos"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[var(--cor-verde)] px-5 py-3 font-semibold text-white text-decoration-none shadow-sm transition hover:bg-[var(--cor-verde-escuro)]"
               >
-              Conhecer produtos e serviços
+              Conhecer produtos
               </Link>
               <Link
-                href="/login"
+                href="/cadConta"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--cor-borda)] bg-[var(--cor-superficie)] px-5 py-3 font-semibold text-[var(--cor-marrom)] text-decoration-none transition hover:border-[var(--cor-verde)] hover:text-[var(--cor-verde)]"
               >
-                Acessar minha conta
+                Criar minha conta
               </Link>
             </div>
           </div>

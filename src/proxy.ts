@@ -9,13 +9,16 @@ const ROTAS_PUBLICAS = [
     "/api/auth/recSenha", 
     "/api/auth/recSenha/validarCodigo", 
     "/api/auth/recSenha/alterarSenha",
+    "/api/produtos",
     "/produtos",
-    "/login"
+    "/login",
+    "/servicos"
 ];
 
 // Verifica se o caminho da requisição é uma rota pública.
 function rotaPublica(caminho: string): boolean {
-    return ROTAS_PUBLICAS.includes(caminho);
+    return ROTAS_PUBLICAS.includes(caminho)
+        || caminho.startsWith("/api/catalogo/imagem/");
 }
 
 /**
