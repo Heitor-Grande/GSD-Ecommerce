@@ -233,6 +233,8 @@ Utils devem ficar em `src/utils`.
 
 Use esta pasta para funções puras, helpers compartilhados e utilitários server-side pequenos. Evite colocar regra de negócio extensa em `utils`; se a função depender de contexto de domínio, ela provavelmente pertence a um service, hook ou módulo específico da aplicação final.
 
+Toda função com potencial de uso repetido em páginas, componentes, APIs ou outros módulos deve ser criada em `src/utils` e importada nos locais que precisarem dela. Antes de implementar uma função local, verifique se já existe um utilitário equivalente; evite manter implementações duplicadas da mesma formatação, máscara, validação, normalização ou transformação de dados.
+
 Utils atuais e uso esperado:
 
 - `api.ts`: `requisitarAPI` e tipo `RespostaApi`. Use no frontend para centralizar `method`, headers JSON, body e tratamento de erro.
