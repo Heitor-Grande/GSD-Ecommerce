@@ -81,3 +81,36 @@ export function formatarCategoria(categoria: string): string {
 
     return categoria.charAt(0).toUpperCase() + categoria.slice(1);
 }
+
+/**
+ * Formata progressivamente um documento brasileiro como CPF ou CNPJ.
+ * Use em campos que aceitam os dois tipos de documento no mesmo input.
+ */
+export function aplicarMascaraCpfCnpj(valor: string): string {
+    const digitos = valor.replace(/\D/g, "").slice(0, 14);
+
+    if (digitos.length <= 11) {
+        return digitos
+            .replace(/^(\d{3})(\d)/, "$1.$2")
+            .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+            .replace(/\.(\d{3})(\d)/, ".$1-$2");
+    }
+
+    return digitos
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+/**
+ * Formata progressivamente um número de celular brasileiro com DDD.
+ * Limita o valor a 11 dígitos no padrão (00) 00000-0000.
+ */
+export function aplicarMascaraCelular(valor: string): string {
+    const digitos = valor.replace(/\D/g, "").slice(0, 11);
+
+    return digitos
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2");
+}

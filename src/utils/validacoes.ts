@@ -24,3 +24,42 @@ export function validarEmail(valor: string): boolean {
 export function normalizarCampoOpcional(valor: unknown): string | null {
     return validarStringComConteudo(valor) ? valor.trim() : null;
 }
+
+export type ResultadoValidacaoSenha = {
+    valida: boolean;
+    mensagem: string;
+};
+
+/**
+ * Valida a complexidade mínima de uma senha da aplicação.
+ * Exige 11 caracteres, pelo menos 3 números e ao menos 1 caractere especial.
+ */
+export function validarComplexidadeSenha(senha: string): ResultadoValidacaoSenha {
+    if (senha.length < 11) {
+        return {
+            valida: false,
+            mensagem: "A senha deve possuir pelo menos 11 caracteres.",
+        };
+    }
+
+    const quantidadeNumeros = (senha.match(/\d/g) ?? []).length;
+
+    if (quantidadeNumeros < 3) {
+        return {
+            valida: false,
+            mensagem: "A senha deve possuir pelo menos 3 números.",
+        };
+    }
+
+    if (!/[^\p{L}\p{N}\s]/u.test(senha)) {
+        return {
+            valida: false,
+            mensagem: "A senha deve possuir pelo menos 1 caractere especial, como @, $ ou <.",
+        };
+    }
+
+    return {
+        valida: true,
+        mensagem: "",
+    };
+}
