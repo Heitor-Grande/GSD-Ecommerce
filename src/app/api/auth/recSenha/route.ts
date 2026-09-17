@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { consultarBancoDados } from "@/services/database";
 import { enviarEmail } from "@/services/email";
+import { gerarCodigoNumerico, validarCodigoNumerico } from "@/utils/codigos";
 import { criarHash } from "@/utils/criptografia";
 import { criarJWTRecuperacaoSenha, obterPayloadRecuperacaoSenhaJWT } from "@/utils/jwt";
 import { verificarRateLimitPorIp } from "@/utils/rateLimit";
@@ -30,22 +31,6 @@ type UsuarioRecuperacaoSenha = {
     email: string;
     ativo: boolean;
 };
-
-/**
- * Gera um código numérico de cinco dígitos para validação de recuperação de senha.
- * Use no fluxo de recuperação antes da redefinição definitiva da senha.
- */
-function gerarCodigoRecuperacaoSenha(): string {
-    return String(Math.floor(10000 + Math.random() * 90000));
-}
-
-/**
- * Confirma se o código informado possui exatamente cinco dígitos.
- * Use antes de comparar com o código salvo no token temporário.
- */
-function validarFormatoCodigoRecuperacao(codigo: string): boolean {
-    return /^\d{5}$/.test(codigo);
-}
 
 /**
  * Monta o HTML do e-mail de recuperação de senha.
@@ -118,7 +103,7 @@ async function obterUsuarioAtivoPorEmail(email: string): Promise<UsuarioRecupera
  * Valida token temporário, código de recuperação e existência do usuário ativo.
  */
 async function validarTokenCodigoRecuperacao(token: string, codigo: string): Promise<UsuarioRecuperacaoSenha | Response> {
-    if (!token || !validarFormatoCodigoRecuperacao(codigo)) {
+    if (!token || !validarCodigoNumerico(codigo, 5)) {
         return criarRespostaApi(false, "Informe o código de recuperação válido.", null, 400);
     }
 
@@ -165,7 +150,7 @@ export async function POST(request: NextRequest) {
             return usuario;
         }
 
-        const codigo = gerarCodigoRecuperacaoSenha();
+        const codigo = gerarCodigoNumerico(5);
         const token = criarJWTRecuperacaoSenha(email, codigo);
 
         await enviarEmail({

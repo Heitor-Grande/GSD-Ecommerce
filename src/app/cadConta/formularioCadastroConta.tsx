@@ -10,12 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { FaLeaf, FaUserPlus } from "react-icons/fa";
+import ModalVerificacaoEmail from "./components/modalVerificacaoEmail";
 
 type FormularioCadastroContaProps = {
     nomeEmpresa: string;
 };
 
-type DadosCadastroConta = {
+export type DadosCadastroConta = {
     nome: string;
     documento: string;
     dataNascimento: string;
@@ -24,6 +25,20 @@ type DadosCadastroConta = {
     senha: string;
     confirmarSenha: string;
 };
+
+type DadosTokenVerificacao = {
+    token: string;
+};
+
+/** Confirma se a API retornou o token temporário da verificação de e-mail. */
+function validarDadosTokenVerificacao(dados: unknown): dados is DadosTokenVerificacao {
+    return (
+        typeof dados === "object"
+        && dados !== null
+        && "token" in dados
+        && typeof dados.token === "string"
+    );
+}
 
 const DADOS_INICIAIS: DadosCadastroConta = {
     nome: "",
@@ -46,6 +61,8 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
     const [mensagemResposta, setMensagemResposta] = useState("");
     const [carregando, setCarregando] = useState(false);
     const [cadastroConcluido, setCadastroConcluido] = useState(false);
+    const [tokenVerificacao, setTokenVerificacao] = useState("");
+    const [modalVerificacaoAberto, setModalVerificacaoAberto] = useState(false);
 
     /** Atualiza um campo e limpa o retorno da validação anterior. */
     function atualizarCampo(campo: keyof DadosCadastroConta, valor: string) {
@@ -56,7 +73,7 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
         setMensagemFormulario("");
     }
 
-    /** Valida os dados e solicita a criação pública da conta do cliente. */
+    /** Valida os dados e solicita o código de verificação do e-mail. */
     async function validarFormulario(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -91,18 +108,23 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
         setCadastroConcluido(false);
 
         try {
-            const resposta = await requisitarAPI("/api/cadConta", {
-                method: "POST",
-                body: dados,
-            });
+            const resposta = await requisitarAPI(
+                "/api/cadConta/verificacao?email=" + encodeURIComponent(dados.email.trim()),
+                {
+                    method: "GET",
+                }
+            );
 
-            setDados(DADOS_INICIAIS);
-            setCadastroConcluido(true);
-            setMensagemResposta(resposta.msg);
+            if (!validarDadosTokenVerificacao(resposta.dados)) {
+                throw new Error("Não foi possível obter o token de verificação.");
+            }
+
+            setTokenVerificacao(resposta.dados.token);
+            setModalVerificacaoAberto(true);
         } catch (erro) {
             const mensagemErro = erro instanceof Error
                 ? erro.message
-                : "Não foi possível criar a conta.";
+                : "Não foi possível enviar o código de verificação.";
 
             setMensagemResposta(mensagemErro);
         } finally {
@@ -286,6 +308,26 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
                 </div>
             </section>
 
+            {modalVerificacaoAberto && (
+                <ModalVerificacaoEmail
+                    aberto={modalVerificacaoAberto}
+                    email={dados.email.trim()}
+                    token={tokenVerificacao}
+                    dadosCadastro={dados}
+                    aoFechar={() => {
+                        setModalVerificacaoAberto(false);
+                        setTokenVerificacao("");
+                    }}
+                    aoConcluir={(mensagem) => {
+                        setModalVerificacaoAberto(false);
+                        setTokenVerificacao("");
+                        setDados(DADOS_INICIAIS);
+                        setCadastroConcluido(true);
+                        setMensagemResposta(mensagem);
+                    }}
+                />
+            )}
+
             <ModalResposta
                 isOpen={Boolean(mensagemResposta)}
                 title={cadastroConcluido ? "Conta criada" : "Cadastro"}
@@ -301,7 +343,7 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
 
             <ModalCarregamento
                 show={carregando}
-                text="Criando sua conta..."
+                text="Enviando código de verificação..."
             />
         </main>
     );

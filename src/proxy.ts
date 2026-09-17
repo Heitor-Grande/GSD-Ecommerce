@@ -11,6 +11,7 @@ const ROTAS_PUBLICAS = [
     "/api/auth/recSenha/alterarSenha",
     "/api/produtos",
     "/api/cadConta",
+    "/api/cadConta/verificacao",
     "/produtos",
     "/cadConta",
     "/login",

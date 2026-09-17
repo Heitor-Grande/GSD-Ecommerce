@@ -239,10 +239,11 @@ Utils atuais e uso esperado:
 
 - `api.ts`: `requisitarAPI` e tipo `RespostaApi`. Use no frontend para centralizar `method`, headers JSON, body e tratamento de erro.
 - `autenticacao.ts`: `obterIdUsuarioAutenticado`. Use em APIs para obter o usuário logado pelo cookie `app_session`.
+- `codigos.ts`: `gerarCodigoNumerico` e `validarCodigoNumerico`. Use em fluxos que enviam e validam códigos temporários numéricos.
 - `criptografia.ts`: `criarHash` e `validarHash`. Use para senhas e valores que não devem ser recuperados em texto puro.
 - `criptografiaReversivel.ts`: `criptografarValor` e `descriptografarValor`. Use somente server-side para valores sensíveis que precisam ser recuperados, como SMTP.
 - `empresaUsuario.ts`: `verificarEmpresaPertenceAoUsuario`. Use para validar acesso por empresa antes de consultas ou alterações.
-- `jwt.ts`: `criarJWT`, `criarJWTRecuperacaoSenha`, `obterPayloadJWT`, `obterPayloadRecuperacaoSenhaJWT` e `validarJWT`. Use para sessão e recuperação de senha.
+- `jwt.ts`: concentra a criação e validação de JWTs de sessão, recuperação de senha e verificação temporária do cadastro público.
 - `permissoes.ts`: `verificarPermissaoAPI` e tipos de recurso/ação. Use para proteger APIs por perfil.
 - `rateLimit.ts`: `obterIpRequisicao` e `verificarRateLimitPorIp`. Use em login, recuperação de senha e outras rotas sensíveis.
 - `respostaApi.ts`: `criarRespostaApi` e tipo `RespostaApi`. Use em todas as rotas de API.

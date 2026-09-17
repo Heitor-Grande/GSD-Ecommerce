@@ -13,6 +13,13 @@ type PayloadRecuperacaoSenhaJWT = JwtPayload & {
     dataSolicitacao: string;
 };
 
+type PayloadVerificacaoCadastroContaJWT = JwtPayload & {
+    email: string;
+    codigo: string;
+    finalidade: "cadastro-conta";
+    dataSolicitacao: string;
+};
+
 /**
  * Cria um JWT com id do usuário e data de login.
  * Use para gerar o valor do cookie de sessão da aplicação.
@@ -66,6 +73,49 @@ export function obterPayloadRecuperacaoSenhaJWT(token: string): PayloadRecuperac
         if (
             typeof payload.email === "string"
             && typeof payload.codigo === "string"
+            && typeof payload.dataSolicitacao === "string"
+        ) {
+            return payload;
+        }
+
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Cria o JWT temporário da verificação de e-mail do cadastro público.
+ * O token expira em três minutos e contém o código numérico solicitado.
+ */
+export function criarJWTVerificacaoCadastroConta(email: string, codigo: string): string {
+    return jwt.sign(
+        {
+            email: email,
+            codigo: codigo,
+            finalidade: "cadastro-conta",
+            dataSolicitacao: new Date().toISOString(),
+        } satisfies PayloadVerificacaoCadastroContaJWT,
+        obterSegredoJWT(),
+        {
+            expiresIn: "3m",
+        }
+    );
+}
+
+/**
+ * Valida e retorna o payload do token temporário usado no cadastro público.
+ */
+export function obterPayloadVerificacaoCadastroContaJWT(
+    token: string
+): PayloadVerificacaoCadastroContaJWT | null {
+    try {
+        const payload = jwt.verify(token, obterSegredoJWT()) as PayloadVerificacaoCadastroContaJWT;
+
+        if (
+            typeof payload.email === "string"
+            && typeof payload.codigo === "string"
+            && payload.finalidade === "cadastro-conta"
             && typeof payload.dataSolicitacao === "string"
         ) {
             return payload;

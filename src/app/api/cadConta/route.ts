@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { consultarBancoDados } from "@/services/database";
+import { validarCodigoNumerico } from "@/utils/codigos";
 import { criarHash } from "@/utils/criptografia";
+import { obterPayloadVerificacaoCadastroContaJWT } from "@/utils/jwt";
 import { normalizarSomenteDigitos } from "@/utils/normalizadores";
 import { verificarRateLimitPorIp } from "@/utils/rateLimit";
 import { criarRespostaApi } from "@/utils/respostaApi";
@@ -19,6 +21,8 @@ type CadastroContaBody = {
     email?: unknown;
     senha?: unknown;
     confirmarSenha?: unknown;
+    tokenVerificacao?: unknown;
+    codigoVerificacao?: unknown;
 };
 
 type RegistroId = {
@@ -47,6 +51,12 @@ export async function POST(request: NextRequest) {
         const email = validarStringComConteudo(body.email) ? body.email.trim().toLowerCase() : "";
         const senha = validarStringComConteudo(body.senha) ? body.senha : "";
         const confirmarSenha = validarStringComConteudo(body.confirmarSenha) ? body.confirmarSenha : "";
+        const tokenVerificacao = validarStringComConteudo(body.tokenVerificacao)
+            ? body.tokenVerificacao
+            : "";
+        const codigoVerificacao = validarStringComConteudo(body.codigoVerificacao)
+            ? body.codigoVerificacao.trim()
+            : "";
         const dataNascimento = validarStringComConteudo(body.dataNascimento)
             ? body.dataNascimento.trim()
             : "";
@@ -81,6 +91,20 @@ export async function POST(request: NextRequest) {
 
         if (senha !== confirmarSenha) {
             return criarRespostaApi(false, "A confirmação da senha deve ser igual à senha.", null, 400);
+        }
+
+        if (!validarCodigoNumerico(codigoVerificacao, 5)) {
+            return criarRespostaApi(false, "Informe um código de verificação válido.", null, 400);
+        }
+
+        const payloadVerificacao = obterPayloadVerificacaoCadastroContaJWT(tokenVerificacao);
+
+        if (!payloadVerificacao) {
+            return criarRespostaApi(false, "A verificação do e-mail expirou ou é inválida.", null, 401);
+        }
+
+        if (payloadVerificacao.email !== email || payloadVerificacao.codigo !== codigoVerificacao) {
+            return criarRespostaApi(false, "A verificação do e-mail não confere.", null, 400);
         }
 
         const senhaCriptografada = criarHash(senha);
