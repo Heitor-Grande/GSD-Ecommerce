@@ -36,11 +36,11 @@ export default function ModalConfirmacao({
             <Modal.Body className="px-6 pt-6 text-center">
                 <div className="space-y-3">
                     {icon && (
-                        <div className="flex justify-center text-4xl text-red-600">
+                        <div className="flex justify-center text-4xl text-[var(--cor-amarelo)]">
                             {icon}
                         </div>
                     )}
-                    <p className="mb-0 font-bold text-slate-800">
+                    <p className="mb-0 font-bold text-[var(--cor-texto)]">
                         {message}
                     </p>
                 </div>
@@ -55,7 +55,7 @@ export default function ModalConfirmacao({
                     loading={false}
                     variant="primary"
                     type="button"
-                    className="w-full"
+                    className="w-full !border-[var(--cor-verde)] !bg-[var(--cor-superficie)] !text-[var(--cor-verde-escuro)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] hover:!text-white focus-visible:!outline-[var(--cor-amarelo)]"
                 />
                 <Botao
                     size="sm"
@@ -65,7 +65,7 @@ export default function ModalConfirmacao({
                     loading={false}
                     variant="danger"
                     type="button"
-                    className="w-full"
+                    className="w-full !border-[var(--cor-marrom)] !bg-[var(--cor-marrom)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] focus-visible:!outline-[var(--cor-amarelo)]"
                 />
             </Modal.Footer>
         </Modal>

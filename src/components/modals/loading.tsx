@@ -25,12 +25,12 @@ export function ModalCarregamento({
             contentClassName="loading-modal border-0 rounded-xl shadow-2xl"
         >
             <Modal.Body className="px-6 py-8 text-center">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <span className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" role="status" aria-hidden="true" />
+                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-xl bg-[var(--cor-verde-claro)] text-[var(--cor-verde)]">
+                    <span className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--cor-borda)] border-t-[var(--cor-verde)]" role="status" aria-hidden="true" />
                 </div>
 
-                <p className="mb-1 text-lg font-bold text-slate-800">Aguarde</p>
-                <p className="mb-0 text-sm leading-relaxed text-slate-500">{text}</p>
+                <p className="mb-1 text-lg font-bold text-[var(--cor-texto)]">Aguarde</p>
+                <p className="mb-0 text-sm leading-relaxed text-[var(--cor-texto-secundario)]">{text}</p>
             </Modal.Body>
         </Modal>
     );
