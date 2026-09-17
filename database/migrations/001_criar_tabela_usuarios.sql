@@ -17,3 +17,7 @@ create table public.usuarios (
 
 create unique index usuarios_email_unico_idx
     on public.usuarios using btree (lower((email)::text));
+
+--UPDATE NECESSARIO
+alter table public.usuarios
+    add column if not exists data_nascimento date null;

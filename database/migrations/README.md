@@ -11,6 +11,7 @@ Execute os scripts em ordem crescente pelo prefixo numérico. Esta pasta contém
 5. `006_criar_tabela_usuarios_empresas.sql`
 6. `007_criar_tabela_auditoria.sql`
 7. `008_criar_tabela_produtos.sql`
+8. `009_adicionar_data_nascimento_usuarios.sql`
 
 ## Tabela `usuarios`
 
@@ -24,6 +25,7 @@ Campos:
 - `senha_hash`: hash da senha.
 - `telefone`: telefone opcional.
 - `documento`: documento opcional.
+- `data_nascimento`: data de nascimento opcional do usuário.
 - `perfil_id`: perfil opcional do usuário.
 - `empresa_padrao`: empresa padrão opcional do usuário.
 - `ativo`: status do usuário.

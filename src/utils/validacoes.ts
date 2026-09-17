@@ -63,3 +63,27 @@ export function validarComplexidadeSenha(senha: string): ResultadoValidacaoSenha
         mensagem: "",
     };
 }
+
+/**
+ * Valida uma data de nascimento no formato ISO, rejeitando datas inexistentes e futuras.
+ */
+export function validarDataNascimento(dataNascimento: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataNascimento)) {
+        return false;
+    }
+
+    const [ano, mes, dia] = dataNascimento.split("-").map(Number);
+    const data = new Date(Date.UTC(ano, mes - 1, dia));
+    const dataValida = data.getUTCFullYear() === ano
+        && data.getUTCMonth() === mes - 1
+        && data.getUTCDate() === dia;
+
+    if (!dataValida) {
+        return false;
+    }
+
+    const hoje = new Date();
+    const hojeUtc = Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate());
+
+    return data.getTime() <= hojeUtc;
+}

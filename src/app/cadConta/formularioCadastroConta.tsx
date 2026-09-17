@@ -1,9 +1,13 @@
 "use client";
 
 import { Botao } from "@/components/inputs/button";
+import { ModalCarregamento } from "@/components/modals/loading";
+import ModalResposta from "@/components/modals/responseModal";
+import { requisitarAPI } from "@/utils/api";
 import { aplicarMascaraCelular, aplicarMascaraCpfCnpj } from "@/utils/mascaras";
 import { validarComplexidadeSenha } from "@/utils/validacoes";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { FaLeaf, FaUserPlus } from "react-icons/fa";
 
@@ -36,9 +40,12 @@ const CLASSE_LABEL = "block text-sm font-semibold text-[var(--cor-marrom)]";
 
 /** Formulário client-side de cadastro da conta do cliente. */
 export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroContaProps) {
+    const router = useRouter();
     const [dados, setDados] = useState<DadosCadastroConta>(DADOS_INICIAIS);
     const [mensagemFormulario, setMensagemFormulario] = useState("");
-    const [formularioValido, setFormularioValido] = useState(false);
+    const [mensagemResposta, setMensagemResposta] = useState("");
+    const [carregando, setCarregando] = useState(false);
+    const [cadastroConcluido, setCadastroConcluido] = useState(false);
 
     /** Atualiza um campo e limpa o retorno da validação anterior. */
     function atualizarCampo(campo: keyof DadosCadastroConta, valor: string) {
@@ -47,24 +54,21 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
             [campo]: valor,
         }));
         setMensagemFormulario("");
-        setFormularioValido(false);
     }
 
-    /** Valida os dados preenchidos sem enviá-los ao servidor nesta etapa. */
-    function validarFormulario(event: FormEvent<HTMLFormElement>) {
+    /** Valida os dados e solicita a criação pública da conta do cliente. */
+    async function validarFormulario(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         const quantidadeDigitosDocumento = dados.documento.replace(/\D/g, "").length;
         const quantidadeDigitosCelular = dados.celular.replace(/\D/g, "").length;
 
         if (quantidadeDigitosDocumento !== 11 && quantidadeDigitosDocumento !== 14) {
-            setFormularioValido(false);
             setMensagemFormulario("Informe um CPF ou CNPJ completo.");
             return;
         }
 
         if (quantidadeDigitosCelular !== 11) {
-            setFormularioValido(false);
             setMensagemFormulario("Informe um número de celular com DDD.");
             return;
         }
@@ -72,19 +76,38 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
         const resultadoValidacaoSenha = validarComplexidadeSenha(dados.senha);
 
         if (!resultadoValidacaoSenha.valida) {
-            setFormularioValido(false);
             setMensagemFormulario(resultadoValidacaoSenha.mensagem);
             return;
         }
 
         if (dados.senha !== dados.confirmarSenha) {
-            setFormularioValido(false);
             setMensagemFormulario("A confirmação da senha deve ser igual à senha.");
             return;
         }
 
-        setFormularioValido(true);
-        setMensagemFormulario("Formulário preenchido corretamente.");
+        setCarregando(true);
+        setMensagemFormulario("");
+        setMensagemResposta("");
+        setCadastroConcluido(false);
+
+        try {
+            const resposta = await requisitarAPI("/api/cadConta", {
+                method: "POST",
+                body: dados,
+            });
+
+            setDados(DADOS_INICIAIS);
+            setCadastroConcluido(true);
+            setMensagemResposta(resposta.msg);
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error
+                ? erro.message
+                : "Não foi possível criar a conta.";
+
+            setMensagemResposta(mensagemErro);
+        } finally {
+            setCarregando(false);
+        }
     }
 
     return (
@@ -233,11 +256,7 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
                         {mensagemFormulario && (
                             <p
                                 role="status"
-                                className={"mt-5 rounded-lg border px-4 py-3 text-sm font-semibold " + (
-                                    formularioValido
-                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                        : "border-red-200 bg-red-50 text-red-700"
-                                )}
+                                className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
                             >
                                 {mensagemFormulario}
                             </p>
@@ -256,8 +275,8 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
                                 label="Criar minha conta"
                                 icon={<FaUserPlus aria-hidden="true" />}
                                 onClick={() => undefined}
-                                disabled={false}
-                                loading={false}
+                                disabled={carregando}
+                                loading={carregando}
                                 variant="primary"
                                 type="submit"
                                 className="w-full !border-[var(--cor-verde)] !bg-[var(--cor-verde)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] focus-visible:!outline-[var(--cor-amarelo)] sm:w-auto"
@@ -266,6 +285,24 @@ export function FormularioCadastroConta({ nomeEmpresa }: FormularioCadastroConta
                     </form>
                 </div>
             </section>
+
+            <ModalResposta
+                isOpen={Boolean(mensagemResposta)}
+                title={cadastroConcluido ? "Conta criada" : "Cadastro"}
+                message={mensagemResposta}
+                onClose={() => {
+                    setMensagemResposta("");
+
+                    if (cadastroConcluido) {
+                        router.push("/login");
+                    }
+                }}
+            />
+
+            <ModalCarregamento
+                show={carregando}
+                text="Criando sua conta..."
+            />
         </main>
     );
 }

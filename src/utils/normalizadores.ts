@@ -69,3 +69,11 @@ export function obterBooleano(valor: unknown, padrao: boolean): boolean {
 export function normalizarImagemIlustrativa(valor: unknown): string | null {
     return validarStringComConteudo(valor) ? valor.trim() : null;
 }
+
+/**
+ * Remove todos os caracteres não numéricos de um valor textual.
+ * Use para normalizar documentos e telefones recebidos com máscara.
+ */
+export function normalizarSomenteDigitos(valor: unknown): string {
+    return typeof valor === "string" ? valor.replace(/\D/g, "") : "";
+}
