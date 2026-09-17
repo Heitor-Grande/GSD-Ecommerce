@@ -135,6 +135,17 @@ export function FormularioLogin({ nomeEmpresa }: FormularioLoginProps) {
               type="submit"
               className="w-full !border-[var(--cor-verde)] !bg-[var(--cor-verde)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] focus-visible:!outline-[var(--cor-amarelo)]"
             />
+
+            <Botao
+              size="lg"
+              label="Criar conta"
+              onClick={() => router.push("/cadConta")}
+              disabled={loading}
+              loading={false}
+              variant="outline-primary"
+              type="button"
+              className="mt-3 w-full !border-[var(--cor-verde)] !bg-[var(--cor-superficie)] !text-[var(--cor-verde-escuro)] hover:!border-[var(--cor-verde-escuro)] hover:!bg-[var(--cor-verde-escuro)] hover:!text-white focus-visible:!outline-[var(--cor-amarelo)]"
+            />
           </form>
         </div>
 
